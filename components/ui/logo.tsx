@@ -1,44 +1,28 @@
 interface LogoProps {
+  width?: number | string
+  height?: number | string
   className?: string
-  width?: number
-  height?: number
+  fill?: string
 }
 
-export function Logo({ className = "", width = 24, height = 24 }: LogoProps) {
+export default function Logo({ width = 100, height = 80, className = "", fill = "#fff" }: LogoProps) {
   return (
     <svg
-      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      id="Capa_1"
+      viewBox="0 0 1000 801"
       width={width}
       height={height}
-      viewBox="0 0 3000 714"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+      className={className}
     >
-      <g id="LOGOTIPO">
-        <g id="ISOTIPO">
-          <text
-            className="fill-white font-bold"
-            style={{
-              fontFamily: "Geist, sans-serif",
-              fontSize: "852.89px",
-              fontWeight: 700,
-              letterSpacing: "-0.03em",
-            }}
-            transform="translate(36 651) scale(1.24 1)"
-          >
-            <tspan x="616.63" y="0">
-              ERN
-            </tspan>
-          </text>
-          <path
-            className="fill-white"
-            d="M391.78,638.36L45.57,43.6l210.15-1.94c16.35-2.74,34.55,7.44,44.78,25.03l206.46,355c10.23,17.6,10.08,38.45-.39,51.31l-114.8,165.36Z"
-          />
-          <path
-            className="fill-white"
-            d="M658.09,247.77s-35.51-79.89-124.28-71.02c-88.77,8.88-115.4-60.7-115.4-88.77,0-35.51,8.88-44.39,8.88-44.39h363.96"
-          />
-        </g>
+      <defs>
+        <style>{`.cls-1{fill:${fill}}`}</style>
+      </defs>
+      <g id="LOGO">
+        <path
+          d="M509.69 792c52.67-79.46 83.3-174.44 83.3-276.48 0-279.33-229.48-505.77-512.56-505.77-25.64 0-50.84 1.87-75.47 5.45L509.69 792ZM526.82 12.46c-5.04 13.75-7.78 28.6-7.78 44.1 0 70.82 57.41 128.22 128.22 128.22 2.81 0 5.6-.1 8.37-.28l.3.15c.65-.11 1.3-.21 1.95-.31 3.7-.3 7.36-.77 10.97-1.38 4.96-.45 9.97-.69 15.05-.69 65.08 0 121.34 37.9 148.14 92.94L995.05 12.46H526.82Z"
+          className="cls-1"
+        />
       </g>
     </svg>
   )
