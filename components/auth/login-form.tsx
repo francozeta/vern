@@ -9,6 +9,11 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import Logo from "@/components/ui/logo"
 import { FaGoogle, FaSpotify } from "react-icons/fa"
 
+// Add these imports at the top:
+import { signInWithEmail, signInWithProvider } from "@/lib/auth/auth-helpers"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+
 interface LoginFormProps {
   onGoogleLogin?: () => void
   onSpotifyLogin?: () => void
@@ -28,14 +33,20 @@ export default function LoginForm({
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
+  // Replace the existing handler functions with these:
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !password) return
 
     setIsLoading(true)
     try {
-      await onEmailLogin?.(email, password)
+      await signInWithEmail(email, password)
+      toast.success("Welcome back!")
+      router.push("/")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign in")
     } finally {
       setIsLoading(false)
     }
@@ -44,7 +55,9 @@ export default function LoginForm({
   const handleGoogleLogin = async () => {
     setIsLoading(true)
     try {
-      await onGoogleLogin?.()
+      await signInWithProvider("google")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign in with Google")
     } finally {
       setIsLoading(false)
     }
@@ -53,7 +66,9 @@ export default function LoginForm({
   const handleSpotifyLogin = async () => {
     setIsLoading(true)
     try {
-      await onSpotifyLogin?.()
+      await signInWithProvider("spotify")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign in with Spotify")
     } finally {
       setIsLoading(false)
     }
@@ -100,7 +115,7 @@ export default function LoginForm({
           variant="outline"
           className="w-full h-11 sm:h-12 bg-neutral-900 border-neutral-700 text-white hover:bg-neutral-800 hover:border-neutral-600 transition-all duration-200 text-sm sm:text-base"
         >
-          <FaSpotify  className="w-4 h-4 sm:w-5 sm:h-5 mr-3" />
+          <FaSpotify className="w-4 h-4 sm:w-5 sm:h-5 mr-3" />
           Continue with Spotify
         </Button>
       </div>

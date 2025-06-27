@@ -9,7 +9,7 @@ export default function Logo({ width = 100, height = 80, className = "", fill = 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      id="Capa_1"
+      id="Logo"
       viewBox="0 0 1000 801"
       width={width}
       height={height}
