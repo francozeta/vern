@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { AudioWaveform, BookOpen, Bot, Frame, Map, PieChart, Settings2, SquareTerminal } from "lucide-react"
+import { AudioWaveform, BookOpen, Frame, PieChart, Settings2, SquareTerminal } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
@@ -12,9 +12,9 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } fr
 // This is VERN data.
 const data = {
   user: {
-    name: "Alex Rivera",
-    email: "alex@vern.music",
-    avatar: "/placeholder.svg?height=32&width=32",
+    name: "User Name",
+    email: "user@vern.music",
+    avatar: "https://avatars.githubusercontent.com/u/124936792?v=4",
   },
   navMain: [
     {
@@ -45,24 +45,6 @@ const data = {
       title: "Reviews",
       url: "#",
       icon: BookOpen,
-      items: [
-        {
-          title: "Write Review",
-          url: "#",
-        },
-        {
-          title: "My Reviews",
-          url: "#",
-        },
-        {
-          title: "Following",
-          url: "#",
-        },
-        {
-          title: "Popular",
-          url: "#",
-        },
-      ],
     },
     {
       title: "Library",
@@ -88,50 +70,9 @@ const data = {
       ],
     },
     {
-      title: "Social",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Activity Feed",
-          url: "#",
-        },
-        {
-          title: "Following",
-          url: "#",
-        },
-        {
-          title: "Followers",
-          url: "#",
-        },
-        {
-          title: "Messages",
-          url: "#",
-        },
-      ],
-    },
-    {
       title: "Settings",
       url: "#",
       icon: Settings2,
-      items: [
-        {
-          title: "Profile",
-          url: "#",
-        },
-        {
-          title: "Account",
-          url: "#",
-        },
-        {
-          title: "Privacy",
-          url: "#",
-        },
-        {
-          title: "Notifications",
-          url: "#",
-        },
-      ],
     },
   ],
   projects: [
@@ -144,11 +85,6 @@ const data = {
       name: "Artist Dashboard",
       url: "#",
       icon: PieChart,
-    },
-    {
-      name: "Analytics",
-      url: "#",
-      icon: Map,
     },
   ],
 }
