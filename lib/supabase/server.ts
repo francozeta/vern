@@ -3,7 +3,7 @@ import { cookies } from "next/headers"
 import type { Database } from "@/types/db"
 
 export async function createServerSupabaseClient() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies(); // Fixed: Use `cookies` from `next/headers` to get cookie store
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,18 +11,18 @@ export async function createServerSupabaseClient() {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return cookieStore.getAll(); // ya puedes usarlo
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            // Puedes ignorar esto si usas middleware para sesiones.
           }
         },
       },
-    },
-  )
+    }
+  );
 }
