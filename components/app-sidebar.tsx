@@ -1,26 +1,37 @@
-"use client"
-
 import type * as React from "react"
-import { AudioWaveform, BookOpen, Frame, PieChart, Settings2, SquareTerminal } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
 import { AppBranding } from "@/components/app-branding"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
+import { createServerSupabaseClient } from "@/lib/supabase/server"
 
-// This is VERN data.
-const data = {
-  user: {
-    name: "User Name",
-    email: "user@vern.music",
-    avatar: "https://avatars.githubusercontent.com/u/124936792?v=4",
-  },
-  navMain: [
+export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const supabase = await createServerSupabaseClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let userData = null
+  if (user) {
+    // Get user profile data
+    const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+
+    userData = {
+      name: profile?.display_name || "User",
+      email: user.email || "",
+      avatar: profile?.avatar_url || "",
+      userId: user.id,
+    }
+  }
+
+  // Serialize navigation data to avoid passing functions to client components
+  const navMainData = [
     {
       title: "Discover",
       url: "#",
-      icon: SquareTerminal,
+      icon: "SquareTerminal",
       isActive: true,
       items: [
         {
@@ -44,12 +55,12 @@ const data = {
     {
       title: "Reviews",
       url: "#",
-      icon: BookOpen,
+      icon: "BookOpen",
     },
     {
       title: "Library",
       url: "#",
-      icon: AudioWaveform,
+      icon: "AudioWaveform",
       items: [
         {
           title: "Liked Songs",
@@ -72,36 +83,33 @@ const data = {
     {
       title: "Settings",
       url: "#",
-      icon: Settings2,
+      icon: "Settings2",
     },
-  ],
-  projects: [
+  ]
+
+  const projectsData = [
     {
       name: "Upload Music",
       url: "#",
-      icon: Frame,
+      icon: "Frame",
     },
     {
       name: "Artist Dashboard",
       url: "#",
-      icon: PieChart,
+      icon: "PieChart",
     },
-  ],
-}
+  ]
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props} className="bg-black">
       <SidebarHeader>
         <AppBranding />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={navMainData} />
+        <NavProjects projects={projectsData} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
+      <SidebarFooter>{userData && <NavUser user={userData} />}</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

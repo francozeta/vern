@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SiVercel } from "react-icons/si"
 import { FaGoogle, FaSpotify } from "react-icons/fa"
+import { signUp } from "@/app/actions/auth"
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form>
+      <form action={signUp}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2">
             <a href="#" className="flex flex-col items-center gap-2 font-medium">
@@ -29,19 +30,15 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
           <div className="flex flex-col gap-6">
             <div className="grid gap-3">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" type="text" placeholder="Alex Rivera" required />
+              <Input id="name" name="name" type="text" placeholder="Alex Rivera" required />
             </div>
             <div className="grid gap-3">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="alex@example.com" required />
+              <Input id="email" name="email" type="email" placeholder="alex@example.com" required />
             </div>
             <div className="grid gap-3">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="Create a strong password" required />
-            </div>
-            <div className="grid gap-3">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input id="confirmPassword" type="password" placeholder="Confirm your password" required />
+              <Input id="password" name="password" type="password" placeholder="Create a strong password" required />
             </div>
             <Button type="submit" className="w-full">
               Create Account
@@ -51,11 +48,11 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
             <span className="bg-background text-muted-foreground relative z-10 px-2">Or</span>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Button variant="outline" type="button" className="w-full bg-transparent">
+            <Button variant="outline" type="button" className="w-full bg-transparent" disabled={true}>
               <FaSpotify className="size-4" />
               Continue with Spotify
             </Button>
-            <Button variant="outline" type="button" className="w-full bg-transparent">
+            <Button variant="outline" type="button" className="w-full bg-transparent" disabled={true}>
               <FaGoogle className="size-4" />
               Continue with Google
             </Button>

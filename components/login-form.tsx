@@ -1,23 +1,19 @@
+import type React from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SiVercel } from "react-icons/si"
 import { FaGoogle, FaSpotify } from "react-icons/fa"
+import { signIn } from "@/app/actions/auth"
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form>
+      <form action={signIn}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2">
-            <a
-              href="#"
-              className="flex flex-col items-center gap-2 font-medium"
-            >
+            <a href="#" className="flex flex-col items-center gap-2 font-medium">
               <div className="flex size-8 items-center justify-center rounded-md">
                 <SiVercel className="size-6" />
               </div>
@@ -34,28 +30,25 @@ export function LoginForm({
           <div className="flex flex-col gap-6">
             <div className="grid gap-3">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-              />
+              <Input id="email" name="email" type="email" placeholder="m@example.com" required />
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" name="password" type="password" placeholder="Enter your password" required />
             </div>
             <Button type="submit" className="w-full">
               Login
             </Button>
           </div>
           <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-            <span className="bg-background text-muted-foreground relative z-10 px-2">
-              Or
-            </span>
+            <span className="bg-background text-muted-foreground relative z-10 px-2">Or</span>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Button variant="outline" type="button" className="w-full" disabled={true}>
+            <Button variant="outline" type="button" className="w-full bg-transparent" disabled={true}>
               <FaSpotify className="size-4" />
               Continue with Spotify
             </Button>
-            <Button variant="outline" type="button" className="w-full" disabled={true}>
+            <Button variant="outline" type="button" className="w-full bg-transparent" disabled={true}>
               <FaGoogle className="size-4" />
               Continue with Google
             </Button>
@@ -63,8 +56,7 @@ export function LoginForm({
         </div>
       </form>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        By clicking continue, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
       </div>
     </div>
   )
