@@ -2,18 +2,25 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { uploadProfileImage } from "@/lib/supabase/upload"
+import { uploadProfileImageClient } from "@/lib/supabase/upload"
+import { signUpSchema, signInSchema, onboardingSchema } from "@/lib/validations/auth"
 
 export async function signUp(formData: FormData) {
   const supabase = await createServerSupabaseClient()
 
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
-  const name = formData.get("name") as string
+  // Validate input
+  const result = signUpSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    name: formData.get("name"),
+  })
 
-  if (!email || !password || !name) {
-    throw new Error("All fields are required")
+  if (!result.success) {
+    const firstError = result.error.issues[0]
+    throw new Error(firstError.message)
   }
+
+  const { email, password, name } = result.data
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -41,6 +48,7 @@ export async function signUp(formData: FormData) {
 
     if (profileError) {
       console.error("Profile creation error:", profileError)
+      throw new Error("Failed to create user profile")
     }
   }
 
@@ -50,12 +58,18 @@ export async function signUp(formData: FormData) {
 export async function signIn(formData: FormData) {
   const supabase = await createServerSupabaseClient()
 
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
+  // Validate input
+  const result = signInSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  })
 
-  if (!email || !password) {
-    throw new Error("Email and password are required")
+  if (!result.success) {
+    const firstError = result.error.issues[0]
+    throw new Error(firstError.message)
   }
+
+  const { email, password } = result.data
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -86,6 +100,7 @@ export async function signOut() {
   redirect("/login")
 }
 
+// Original function for backward compatibility
 export async function updateProfile(formData: FormData) {
   const supabase = await createServerSupabaseClient()
   const {
@@ -96,18 +111,40 @@ export async function updateProfile(formData: FormData) {
     throw new Error("Not authenticated")
   }
 
-  const username = formData.get("username") as string
-  const bio = formData.get("bio") as string
-  const role = formData.get("role") as "listener" | "artist" | "both"
+  // Validate input
+  const result = onboardingSchema.safeParse({
+    username: formData.get("username"),
+    bio: formData.get("bio"),
+    role: formData.get("role"),
+  })
+
+  if (!result.success) {
+    const firstError = result.error.issues[0]
+    throw new Error(firstError.message)
+  }
+
+  const { username, bio, role } = result.data
   const profileImage = formData.get("profile_image") as File
+
+  // Check if username is already taken
+  const { data: existingUser } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .neq("id", user.id)
+    .single()
+
+  if (existingUser) {
+    throw new Error("Username is already taken")
+  }
 
   let avatarUrl: string | null = null
 
-  // Handle profile image upload
+  // Handle profile image upload (server-side - problematic)
   if (profileImage && profileImage.size > 0) {
-    const { url, error: uploadError } = await uploadProfileImage(profileImage, user.id)
+    const { url, error: uploadError } = await uploadProfileImageClient(profileImage, user.id)
     if (uploadError) {
-      throw new Error(uploadError)
+      throw new Error(`Image upload failed: ${uploadError}`)
     }
     avatarUrl = url || null
   }
@@ -116,7 +153,7 @@ export async function updateProfile(formData: FormData) {
     .from("profiles")
     .update({
       username,
-      bio,
+      bio: bio || null,
       role,
       avatar_url: avatarUrl,
       onboarding_completed: true,
@@ -124,7 +161,65 @@ export async function updateProfile(formData: FormData) {
     .eq("id", user.id)
 
   if (error) {
-    throw new Error(error.message)
+    console.error("Profile update error:", error)
+    throw new Error("Failed to update profile. Please try again.")
+  }
+
+  redirect("/")
+}
+
+// New function that accepts avatar URL from client-side upload
+export async function updateProfileWithAvatar(formData: FormData) {
+  const supabase = await createServerSupabaseClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error("Not authenticated")
+  }
+
+  // Validate input
+  const result = onboardingSchema.safeParse({
+    username: formData.get("username"),
+    bio: formData.get("bio"),
+    role: formData.get("role"),
+  })
+
+  if (!result.success) {
+    const firstError = result.error.issues[0]
+    throw new Error(firstError.message)
+  }
+
+  const { username, bio, role } = result.data
+  const avatarUrl = formData.get("avatar_url") as string | null
+
+  // Check if username is already taken
+  const { data: existingUser } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .neq("id", user.id)
+    .single()
+
+  if (existingUser) {
+    throw new Error("Username is already taken")
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      username,
+      bio: bio || null,
+      role,
+      avatar_url: avatarUrl,
+      onboarding_completed: true,
+    })
+    .eq("id", user.id)
+
+  if (error) {
+    console.error("Profile update error:", error)
+    throw new Error("Failed to update profile. Please try again.")
   }
 
   redirect("/")
