@@ -15,7 +15,7 @@ export function AppBranding() {
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
             <span className="truncate font-semibold">VERN</span>
-            <span className="truncate text-xs">Music Platform</span>
+            <span className="truncate text-xs text-neutral-50/70">Music Platform</span>
           </div>
         </SidebarMenuButton>
       </SidebarMenuItem>

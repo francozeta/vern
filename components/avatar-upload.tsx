@@ -18,12 +18,12 @@ interface AvatarUploadProps {
 
 const sizeClasses = {
   sm: "w-16 h-16",
-  md: "w-24 h-24",
-  lg: "w-32 h-32",
-  xl: "w-40 h-40",
+  md: "w-20 h-20",
+  lg: "w-24 h-24",
+  xl: "w-32 h-32",
 }
 
-export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, size = "xl", className }: AvatarUploadProps) {
+export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, size = "lg", className }: AvatarUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentAvatarUrl || null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -84,7 +84,7 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, size = "
   }
 
   return (
-    <div className={cn("flex flex-col items-center gap-4", className)}>
+    <div className={cn("flex flex-col items-center gap-3", className)}>
       <div
         className={cn(
           "relative group cursor-pointer rounded-full overflow-hidden border-2 border-dashed transition-all",
@@ -100,14 +100,14 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, size = "
           <>
             <img src={previewUrl || "/placeholder.svg"} alt="Profile preview" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Camera className="w-6 h-6 text-white" />
+              <Camera className="w-5 h-5 text-white" />
             </div>
             {previewUrl !== currentAvatarUrl && (
               <Button
                 type="button"
                 variant="destructive"
                 size="icon"
-                className="absolute -top-2 -right-2 w-6 h-6 rounded-full"
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full"
                 onClick={(e) => {
                   e.stopPropagation()
                   removeImage()
@@ -118,20 +118,17 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, size = "
             )}
           </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4">
-            <GradientAvatar userId={userId} size={size === "xl" ? "lg" : "md"} />
+          <div className="w-full h-full flex flex-col items-center justify-center">
+            <GradientAvatar userId={userId} size="md" />
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Upload className="w-6 h-6 text-white" />
+              <Upload className="w-5 h-5 text-white" />
             </div>
           </div>
         )}
       </div>
 
       <div className="text-center">
-        <p className="text-sm text-muted-foreground mb-2">
-          {previewUrl ? "Click to change photo" : "Click or drag to upload photo"}
-        </p>
-        <p className="text-xs text-muted-foreground">PNG, JPG up to 5MB</p>
+        <p className="text-xs text-muted-foreground">{previewUrl ? "Click to change" : "Click to upload"}</p>
       </div>
 
       <input
