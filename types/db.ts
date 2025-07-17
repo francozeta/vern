@@ -52,6 +52,46 @@ export interface Database {
           onboarding_completed?: boolean
         }
       }
+      reviews: {
+        Row: {
+          id: string
+          user_id: string
+          song_id: string
+          song_title: string
+          song_artist: string
+          song_album: string
+          song_cover_url: string | null
+          song_duration: number | null
+          song_preview_url: string | null
+          song_deezer_url: string | null
+          title: string
+          content: string
+          rating: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          song_id: string
+          song_title: string
+          song_artist: string
+          song_album: string
+          song_cover_url?: string | null
+          song_duration?: number | null
+          song_preview_url?: string | null
+          song_deezer_url?: string | null
+          title: string
+          content: string
+          rating: number
+        }
+        Update: {
+          title?: string
+          content?: string
+          rating?: number
+          updated_at?: string
+        }
+      }
     }
   }
 }
