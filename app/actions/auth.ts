@@ -3,7 +3,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { uploadProfileImageClient } from "@/lib/supabase/upload"
-import { signUpSchema, signInSchema, onboardingSchema } from "@/lib/validations/auth"
+import { signUpSchema, signInSchema, onboardingSchema, editProfileSchema } from "@/lib/validations/auth"
 
 export async function signUp(formData: FormData) {
   const supabase = await createServerSupabaseClient()
@@ -223,4 +223,69 @@ export async function updateProfileWithAvatar(formData: FormData) {
   }
 
   redirect("/")
+}
+
+// New function to update user profile from edit modal
+export async function updateUserProfile(formData: FormData) {
+  const supabase = await createServerSupabaseClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error("Not authenticated")
+  }
+
+  // Validate input
+  const result = editProfileSchema.safeParse({
+    display_name: formData.get("display_name"),
+    username: formData.get("username"),
+    bio: formData.get("bio"),
+    role: formData.get("role"),
+    avatar_url: formData.get("avatar_url"),
+  })
+
+  if (!result.success) {
+    const firstError = result.error.issues[0]
+    throw new Error(firstError.message)
+  }
+
+  const { display_name, username, bio, role, avatar_url } = result.data
+
+  // Check if username is already taken, only if it's being changed
+  if (username) {
+    const { data: existingUser } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .neq("id", user.id)
+      .single()
+
+    if (existingUser) {
+      throw new Error("Username is already taken")
+    }
+  }
+
+  const updateData: {
+    display_name?: string | null
+    username?: string
+    bio?: string | null
+    role?: "listener" | "artist" | "both"
+    avatar_url?: string | null
+  } = {}
+
+  if (display_name !== undefined) updateData.display_name = display_name || null
+  if (username !== undefined) updateData.username = username
+  if (bio !== undefined) updateData.bio = bio || null
+  if (role !== undefined) updateData.role = role
+  if (avatar_url !== undefined) updateData.avatar_url = avatar_url || null
+
+  const { error } = await supabase.from("profiles").update(updateData).eq("id", user.id)
+
+  if (error) {
+    console.error("Profile update error:", error)
+    throw new Error("Failed to update profile. Please try again.")
+  }
+
+  return { success: true, message: "Profile updated successfully!" }
 }
