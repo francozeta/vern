@@ -1,0 +1,158 @@
+"use client"
+
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { AlertCircle, Link, Instagram } from "lucide-react"
+import { FaSpotify } from "react-icons/fa"
+import { cn } from "@/lib/utils"
+import { updateAccountSettings } from "@/app/actions/settings"
+import { accountSettingsSchema, type AccountSettingsInput } from "@/lib/validations/settings"
+
+interface AccountTabProps {
+  profile: {
+    website_url: string | null
+    spotify_url: string | null
+    instagram_url: string | null
+  }
+}
+
+export function AccountTab({ profile }: AccountTabProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid, isDirty },
+  } = useForm<AccountSettingsInput>({
+    resolver: zodResolver(accountSettingsSchema),
+    defaultValues: {
+      website_url: profile.website_url || "",
+      spotify_url: profile.spotify_url || "",
+      instagram_url: profile.instagram_url || "",
+    },
+    mode: "onChange",
+  })
+
+  const onSubmit = async (data: AccountSettingsInput) => {
+    setIsSubmitting(true)
+    setSubmitError(null)
+    setSubmitSuccess(null)
+
+    try {
+      const formData = new FormData()
+      if (data.website_url !== undefined) formData.append("website_url", data.website_url)
+      if (data.spotify_url !== undefined) formData.append("spotify_url", data.spotify_url)
+      if (data.instagram_url !== undefined) formData.append("instagram_url", data.instagram_url)
+
+      const response = await updateAccountSettings(formData)
+      setSubmitSuccess(response.message)
+    } catch (error) {
+      console.error("Error updating account settings:", error)
+      setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <div className="space-y-6">
+        <h3 className="text-lg font-semibold">Social Links</h3>
+
+        {/* Website URL */}
+        <div className="space-y-2">
+          <Label htmlFor="website_url">Website</Label>
+          <div className="relative">
+            <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="website_url"
+              {...register("website_url")}
+              placeholder="https://yourwebsite.com"
+              className={cn("pl-10", errors.website_url && "border-destructive focus-visible:ring-destructive/20")}
+            />
+          </div>
+          {errors.website_url && (
+            <div className="flex items-center gap-2 text-sm text-destructive">
+              <AlertCircle className="size-4" />
+              {errors.website_url.message}
+            </div>
+          )}
+        </div>
+
+        {/* Spotify URL */}
+        <div className="space-y-2">
+          <Label htmlFor="spotify_url">Spotify</Label>
+          <div className="relative">
+            <FaSpotify className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="spotify_url"
+              {...register("spotify_url")}
+              placeholder="https://open.spotify.com/user/username"
+              className={cn("pl-10", errors.spotify_url && "border-destructive focus-visible:ring-destructive/20")}
+            />
+          </div>
+          {errors.spotify_url && (
+            <div className="flex items-center gap-2 text-sm text-destructive">
+              <AlertCircle className="size-4" />
+              {errors.spotify_url.message}
+            </div>
+          )}
+        </div>
+
+        {/* Instagram URL */}
+        <div className="space-y-2">
+          <Label htmlFor="instagram_url">Instagram</Label>
+          <div className="relative">
+            <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="instagram_url"
+              {...register("instagram_url")}
+              placeholder="https://instagram.com/username"
+              className={cn("pl-10", errors.instagram_url && "border-destructive focus-visible:ring-destructive/20")}
+            />
+          </div>
+          {errors.instagram_url && (
+            <div className="flex items-center gap-2 text-sm text-destructive">
+              <AlertCircle className="size-4" />
+              {errors.instagram_url.message}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Submit Error */}
+      {submitError && (
+        <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+          <AlertCircle className="size-4 flex-shrink-0" />
+          {submitError}
+        </div>
+      )}
+
+      {/* Submit Success */}
+      {submitSuccess && (
+        <div className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 rounded-md">
+          <AlertCircle className="size-4 flex-shrink-0" />
+          {submitSuccess}
+        </div>
+      )}
+
+      {/* Submit Button */}
+      <Button type="submit" disabled={isSubmitting || !isDirty || !isValid} className="w-full sm:w-auto">
+        {isSubmitting ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+            Saving Changes...
+          </>
+        ) : (
+          "Save Changes"
+        )}
+      </Button>
+    </form>
+  )
+}

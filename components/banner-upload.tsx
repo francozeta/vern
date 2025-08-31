@@ -4,19 +4,17 @@ import type React from "react"
 
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { GradientAvatar } from "@/components/gradient-avatar"
-import { Camera, Upload, X } from "lucide-react"
+import { Camera, X, ImageIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface AvatarUploadProps {
-  userId: string
-  currentAvatarUrl?: string | null
+interface BannerUploadProps {
+  currentBannerUrl?: string | null
   onImageSelect: (file: File | null) => void
   className?: string
 }
 
-export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, className }: AvatarUploadProps) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(currentAvatarUrl || null)
+export function BannerUpload({ currentBannerUrl, onImageSelect, className }: BannerUploadProps) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(currentBannerUrl || null)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -28,9 +26,9 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, classNam
         return
       }
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size must be less than 5MB")
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File size must be less than 10MB")
         return
       }
 
@@ -39,7 +37,7 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, classNam
       setPreviewUrl(url)
       onImageSelect(file)
     } else {
-      setPreviewUrl(currentAvatarUrl || null)
+      setPreviewUrl(currentBannerUrl || null)
       onImageSelect(null)
     }
   }
@@ -76,11 +74,15 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, classNam
   }
 
   return (
-    <div className={cn("flex flex-col items-center gap-3", className)}>
+    <div className={cn("space-y-4", className)}>
       <div
         className={cn(
-          "relative group cursor-pointer rounded-full overflow-hidden border-2 border-dashed transition-all w-21 h-21", // Fixed size 84x84px
-          isDragging ? "border-primary bg-primary/10" : "border-muted-foreground/25 hover:border-primary/50",
+          "relative group cursor-pointer rounded-xl overflow-hidden border-2 border-dashed transition-all w-full h-32",
+          isDragging
+            ? "border-primary bg-primary/10"
+            : previewUrl
+              ? "border-border hover:border-primary/50"
+              : "border-muted-foreground/25 hover:border-primary/50 bg-muted/30",
         )}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -89,16 +91,19 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, classNam
       >
         {previewUrl ? (
           <>
-            <img src={previewUrl || "/placeholder.svg"} alt="Profile preview" className="w-full h-full object-cover" />
+            <img src={previewUrl || "/placeholder.svg"} alt="Banner preview" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Camera className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-2 text-white">
+                <Camera className="w-5 h-5" />
+                <span className="text-sm font-medium">Change Banner</span>
+              </div>
             </div>
-            {previewUrl !== currentAvatarUrl && (
+            {previewUrl !== currentBannerUrl && (
               <Button
                 type="button"
                 variant="destructive"
                 size="icon"
-                className="absolute -top-1 -right-1 w-5 h-5 rounded-full"
+                className="absolute top-2 right-2 w-6 h-6 rounded-full"
                 onClick={(e) => {
                   e.stopPropagation()
                   removeImage()
@@ -109,17 +114,18 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, classNam
             )}
           </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center">
-            <GradientAvatar userId={userId} size="lg" className="w-full h-full" /> {/* Use lg for GradientAvatar */}
-            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Upload className="w-5 h-5 text-white" />
+          <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <ImageIcon className="w-6 h-6" />
+              </div>
+              <div className="text-center">
+                <div className="text-sm font-medium">Click to upload banner</div>
+                <div className="text-xs">Recommended: 1200x300px</div>
+              </div>
             </div>
           </div>
         )}
-      </div>
-
-      <div className="text-center">
-        <p className="text-xs text-muted-foreground">{previewUrl ? "Click to change" : "Click to upload"}</p>
       </div>
 
       <input

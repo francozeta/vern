@@ -48,18 +48,18 @@ export function FloatingActionButtons() {
         <Button
           size="icon"
           onClick={handleReviewClick}
-          className="h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 bg-primary hover:bg-primary/90"
+          className="h-14 w-14 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 bg-white text-black hover:bg-white/90 hover:scale-105 border-2 border-white/20"
           aria-label="Create Review"
         >
-          <Feather className="h-5 w-5" />
+          <Feather className="h-6 w-6" />
         </Button>
         <Button
           size="icon"
           onClick={handleUploadClick}
-          className="h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 bg-secondary hover:bg-secondary/90"
+          className="h-14 w-14 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 bg-white/10 text-white hover:bg-white/20 hover:scale-105 border-2 border-white/20 backdrop-blur-sm"
           aria-label="Upload Music"
         >
-          <Upload className="h-5 w-5" />
+          <Upload className="h-6 w-6" />
         </Button>
       </div>
 

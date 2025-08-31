@@ -104,41 +104,47 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[650px] max-h-[90vh] p-0 gap-0 bg-background border-border overflow-hidden" showCloseButton={false}>
+      <DialogContent
+        className="sm:max-w-[650px] max-h-[95vh] sm:max-h-[90vh] p-0 gap-0 bg-background border-border flex flex-col overflow-hidden"
+        showCloseButton={false}
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>Create Music Review</DialogTitle>
         </DialogHeader>
-
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border bg-background/80 backdrop-blur-sm flex-shrink-0">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground text-sm sm:text-base"
           >
             Cancel
           </Button>
-          <h2 className="text-lg font-semibold">Create Review</h2>
-          <Button size="sm" disabled={!isValid} onClick={handleSubmit} className="px-6 font-medium">
+          <h2 className="text-base sm:text-lg font-semibold">Create Review</h2>
+          <Button
+            size="sm"
+            disabled={!isValid}
+            onClick={handleSubmit}
+            className="px-4 sm:px-6 font-medium text-sm sm:text-base"
+          >
             Post
           </Button>
         </div>
-
         <div className="flex-1 overflow-y-auto">
           {!selectedSong ? (
             /* Search Phase */
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Search Bar */}
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold">Find a Song</h3>
+                <h3 className="text-lg sm:text-xl font-semibold">Find a Song</h3>
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                   <Input
                     placeholder="Search for songs, artists, or albums..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-12 text-base bg-muted/30 border-muted-foreground/20 focus:border-primary"
+                    className="pl-10 sm:pl-12 h-10 sm:h-12 text-sm sm:text-base bg-muted/30 border-muted-foreground/20 focus:border-primary"
                     autoFocus
                   />
                   {isSearching && (
@@ -151,18 +157,18 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
 
               {/* Search Results */}
               {showResults && (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-muted-foreground">Search Results</h4>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                <div className="space-y-2 sm:space-y-3">
+                  <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">Search Results</h4>
+                  <div className="space-y-1 sm:space-y-2 max-h-80 sm:max-h-96 overflow-y-auto">
                     {searchResults.length > 0 ? (
                       searchResults.map((track) => (
                         <button
                           key={track.id}
                           onClick={() => handleSongSelect(track)}
-                          className="w-full p-4 text-left hover:bg-accent/50 rounded-xl transition-all border border-transparent hover:border-border/50 group"
+                          className="w-full p-3 sm:p-4 text-left hover:bg-accent/50 rounded-lg sm:rounded-xl transition-all border border-transparent hover:border-border/50 group"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                          <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-md sm:rounded-lg overflow-hidden bg-muted flex-shrink-0">
                               <img
                                 src={track.album.cover_medium || "/placeholder.svg"}
                                 alt={`${track.title} cover`}
@@ -173,11 +179,13 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-base truncate">{track.title}</p>
-                              <p className="text-sm text-muted-foreground truncate">{track.artist.name}</p>
-                              <p className="text-xs text-muted-foreground/80 truncate">{track.album.title}</p>
+                              <p className="font-semibold text-sm sm:text-base truncate">{track.title}</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground truncate">{track.artist.name}</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground/80 truncate">
+                                {track.album.title}
+                              </p>
                             </div>
-                            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                            <div className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1.5">
                               <Clock className="h-3 w-3" />
                               {formatDuration(track.duration)}
                             </div>
@@ -185,10 +193,10 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                         </button>
                       ))
                     ) : (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <Music className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                        <p className="text-base font-medium">No songs found</p>
-                        <p className="text-sm">Try a different search term</p>
+                      <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                        <Music className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-2 sm:mb-3 opacity-40" />
+                        <p className="text-sm sm:text-base font-medium">No songs found</p>
+                        <p className="text-xs sm:text-sm">Try a different search term</p>
                       </div>
                     )}
                   </div>
@@ -196,18 +204,18 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
               )}
 
               {!searchQuery && (
-                <div className="text-center py-16 text-muted-foreground">
-                  <Search className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                  <p className="text-xl font-semibold mb-2">Search for Music</p>
-                  <p className="text-base">Find the song you want to review</p>
+                <div className="text-center py-12 sm:py-16 text-muted-foreground">
+                  <Search className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 opacity-30" />
+                  <p className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">Search for Music</p>
+                  <p className="text-sm sm:text-base">Find the song you want to review</p>
                 </div>
               )}
             </div>
           ) : (
             /* Review Phase */
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Selected Song Display */}
-              <div className="flex items-center gap-4 p-4 bg-accent/30 rounded-xl border border-border/50">
+              <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-accent/30 rounded-lg sm:rounded-xl border border-border/50">
                 <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                   <img
                     src={selectedSong.coverArt || "/placeholder.svg"}
@@ -216,10 +224,10 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg leading-tight truncate">{selectedSong.title}</h3>
-                  <p className="text-muted-foreground text-base truncate">{selectedSong.artist}</p>
-                  <p className="text-sm text-muted-foreground/80 truncate">{selectedSong.album}</p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                  <h3 className="font-semibold text-base sm:text-lg leading-tight truncate">{selectedSong.title}</h3>
+                  <p className="text-muted-foreground text-sm sm:text-base truncate">{selectedSong.artist}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground/80 truncate">{selectedSong.album}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     <Clock className="h-3 w-3" />
                     {formatDuration(selectedSong.duration)}
                   </p>
@@ -235,8 +243,8 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
               </div>
 
               {/* Rating */}
-              <div className="space-y-3">
-                <label className="text-base font-semibold">Rating</label>
+              <div className="space-y-2 sm:space-y-3">
+                <label className="text-sm sm:text-base font-semibold">Rating</label>
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -261,19 +269,19 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
               </div>
 
               {/* Review Title */}
-              <div className="space-y-3">
-                <label className="text-base font-semibold">Review Title</label>
+              <div className="space-y-2 sm:space-y-3">
+                <label className="text-sm sm:text-base font-semibold">Review Title</label>
                 <Input
                   placeholder="Give your review a catchy title..."
                   value={reviewTitle}
                   onChange={(e) => setReviewTitle(e.target.value)}
-                  className="text-base h-12"
+                  className="text-sm sm:text-base h-10 sm:h-12"
                   maxLength={maxTitleLength}
                 />
                 <div className="flex justify-end">
                   <span
                     className={cn(
-                      "text-xs",
+                      "text-xs sm:text-sm",
                       reviewTitle.length > maxTitleLength * 0.8 ? "text-destructive" : "text-muted-foreground",
                     )}
                   >
@@ -283,19 +291,19 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
               </div>
 
               {/* Review Content */}
-              <div className="space-y-3">
-                <label className="text-base font-semibold">Your Review</label>
+              <div className="space-y-2 sm:space-y-3">
+                <label className="text-sm sm:text-base font-semibold">Your Review</label>
                 <Textarea
                   placeholder="Share your thoughts about this song. What did you like? How did it make you feel?"
                   value={reviewContent}
                   onChange={(e) => setReviewContent(e.target.value)}
-                  className="min-h-[120px] resize-none text-base leading-relaxed"
+                  className="min-h-[100px] sm:min-h-[120px] resize-none text-sm sm:text-base leading-relaxed"
                   maxLength={maxContentLength}
                 />
                 <div className="flex justify-end">
                   <span
                     className={cn(
-                      "text-xs",
+                      "text-xs sm:text-sm",
                       reviewContent.length > maxContentLength * 0.8 ? "text-destructive" : "text-muted-foreground",
                     )}
                   >

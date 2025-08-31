@@ -1,6 +1,6 @@
 "use client"
 
-import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react"
+import { BadgeCheck, Bell, ChevronsUpDown, LogOut, Sparkles, User } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -24,6 +24,7 @@ export function NavUser({
     email: string
     avatar: string
     userId: string
+    username?: string // Add username for profile link
   }
 }) {
   const { isMobile } = useSidebar()
@@ -87,13 +88,17 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+              <DropdownMenuItem asChild>
+                <a href={user.username ? `/user/${user.username}` : "#"}>
+                  <User />
+                  Profile
+                </a>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
+              <DropdownMenuItem asChild>
+                <a href="/settings">
+                  <BadgeCheck />
+                  Settings
+                </a>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />

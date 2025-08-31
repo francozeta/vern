@@ -23,6 +23,7 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
       email: user.email || "",
       avatar: profile?.avatar_url || "",
       userId: user.id,
+      username: profile?.username, // Add username
     }
   }
 
@@ -82,7 +83,7 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/settings",
       icon: "Settings2",
     },
   ]
@@ -101,7 +102,7 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
   ]
 
   return (
-    <Sidebar collapsible="icon" {...props} className="bg-black">
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <AppBranding />
       </SidebarHeader>

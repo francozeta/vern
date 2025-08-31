@@ -11,6 +11,11 @@ export function HeaderAuthClient() {
   const isMobile = useIsMobile()
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Get user data for modal
   useEffect(() => {
@@ -31,6 +36,15 @@ export function HeaderAuthClient() {
     getUser()
   }, [])
 
+  if (!mounted) {
+    return (
+      <div className="hidden md:flex items-center gap-3">
+        <div className="h-9 w-20 bg-transparent" />
+        <div className="h-9 w-20 bg-transparent" />
+      </div>
+    )
+  }
+
   // Hide on mobile - floating action buttons will handle this
   if (isMobile) {
     return null
@@ -47,18 +61,22 @@ export function HeaderAuthClient() {
 
   return (
     <>
-      <div className="hidden md:flex items-center gap-2">
+      <div className="hidden md:flex items-center gap-3">
         <Button
           variant="ghost"
           size="sm"
           onClick={handleUploadClick}
-          className="h-8 px-3 gap-2 hover:bg-accent/50 transition-colors"
+          className="h-9 px-4 gap-2 hover:bg-white/10 transition-all duration-200 border border-white/20 hover:border-white/30 rounded-full"
         >
           <Upload className="h-4 w-4" />
-          <span className="text-sm">Upload</span>
+          <span className="text-sm font-medium">Upload</span>
         </Button>
 
-        <Button size="sm" onClick={handleReviewClick} className="h-8 px-3 gap-2">
+        <Button
+          size="sm"
+          onClick={handleReviewClick}
+          className="h-9 px-4 gap-2 bg-white text-black hover:bg-white/90 transition-all duration-200 rounded-full font-medium"
+        >
           <Feather className="h-4 w-4" />
           <span className="text-sm">Review</span>
         </Button>
