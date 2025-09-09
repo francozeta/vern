@@ -1,8 +1,9 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Music, Star, Users, TrendingUp, Play, Heart, MessageCircle, Plus } from "lucide-react"
-import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb"
+import { Music, Star, Users, TrendingUp, Play, MessageCircle, Plus } from "lucide-react"
+import { LikeButton } from "@/components/like-button"
+import { getLikeStatus } from "@/app/actions/likes"
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -24,11 +25,21 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(6)
 
+  const reviewsWithLikes = await Promise.all(
+    (recentReviews || []).map(async (review) => {
+      const likeStatus = await getLikeStatus(review.id, user.id)
+      return {
+        ...review,
+        likeCount: likeStatus.success && likeStatus.data ? likeStatus.data.totalLikes : 0,
+        isLiked: likeStatus.success && likeStatus.data ? likeStatus.data.isLiked : false,
+      }
+    }),
+  )
+
   const breadcrumbs = [{ label: "Dashboard", isLink: false }]
 
   return (
     <div className="space-y-8 p-6">
-
       {/* Welcome Section */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">
@@ -98,9 +109,9 @@ export default async function DashboardPage() {
             </Button>
           </div>
 
-          {recentReviews && recentReviews.length > 0 ? (
+          {reviewsWithLikes && reviewsWithLikes.length > 0 ? (
             <div className="space-y-4">
-              {recentReviews.slice(0, 3).map((review) => (
+              {reviewsWithLikes.slice(0, 3).map((review) => (
                 <Card key={review.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
@@ -137,10 +148,11 @@ export default async function DashboardPage() {
                         </div>
                         <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{review.content}</p>
                         <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                          <button className="flex items-center gap-1 hover:text-foreground transition-colors">
-                            <Heart className="h-3 w-3" />
-                            <span>12</span>
-                          </button>
+                          <LikeButton
+                            reviewId={review.id}
+                            initialLikeCount={review.likeCount}
+                            initialIsLiked={review.isLiked}
+                          />
                           <button className="flex items-center gap-1 hover:text-foreground transition-colors">
                             <MessageCircle className="h-3 w-3" />
                             <span>3</span>
