@@ -1,23 +1,24 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Upload, Feather } from "lucide-react"
+import { Upload, Feather, Search } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useState, useEffect } from "react"
 import { ReviewModal } from "@/components/review-modal"
 import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 export function HeaderAuthClient() {
   const isMobile = useIsMobile()
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Get user data for modal
   useEffect(() => {
     const getUser = async () => {
       const supabase = createClient()
@@ -39,13 +40,13 @@ export function HeaderAuthClient() {
   if (!mounted) {
     return (
       <div className="hidden md:flex items-center gap-3">
+        <div className="h-9 w-9 bg-transparent" />
         <div className="h-9 w-20 bg-transparent" />
         <div className="h-9 w-20 bg-transparent" />
       </div>
     )
   }
 
-  // Hide on mobile - floating action buttons will handle this
   if (isMobile) {
     return null
   }
@@ -55,13 +56,25 @@ export function HeaderAuthClient() {
   }
 
   const handleUploadClick = () => {
-    // TODO: Handle upload
     console.log("Upload clicked")
+  }
+
+  const handleSearchClick = () => {
+    router.push("/search")
   }
 
   return (
     <>
       <div className="hidden md:flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleSearchClick}
+          className="h-9 w-9 p-0 hover:bg-white/10 transition-all duration-200 border border-white/20 hover:border-white/30 rounded-full"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+
         <Button
           variant="ghost"
           size="sm"
@@ -82,7 +95,6 @@ export function HeaderAuthClient() {
         </Button>
       </div>
 
-      {/* Review Modal */}
       {user && (
         <ReviewModal
           open={showReviewModal}

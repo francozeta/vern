@@ -2,13 +2,18 @@ import { notFound } from "next/navigation"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { ProfilePageClient } from "@/components/profile-page-client"
 
-export default async function UserProfilePage({ params }: { params: { username: string } }) {
+export default async function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const supabase = await createServerSupabaseClient()
   const {
     data: { user: currentUser },
   } = await supabase.auth.getUser()
 
-  const { data: profile, error } = await supabase.from("profiles").select("*").eq("username", params.username).single()
+  const resolvedParams = await params
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("username", resolvedParams.username)
+    .single()
 
   if (error || !profile) {
     console.error("Error fetching profile:", error)
