@@ -15,6 +15,8 @@ import {
   type SelectedSong,
   type DeezerTrack,
 } from "@/lib/deezer"
+import { createReview, type CreateReviewData } from "@/app/actions/reviews"
+import { toast } from "sonner"
 
 interface ReviewModalProps {
   open: boolean
@@ -33,6 +35,7 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
   const [hoveredRating, setHoveredRating] = useState(0)
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const maxTitleLength = 100
   const maxContentLength = 500
@@ -72,19 +75,45 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
   }
 
   const handleSubmit = async () => {
-    if (isValid) {
-      // TODO: Submit review to API
-      console.log({
-        song: selectedSong,
-        title: reviewTitle,
-        content: reviewContent,
-        rating,
-        userId,
-      })
+    if (!isValid || isSubmitting) return
 
-      // Reset and close
-      resetForm()
-      onOpenChange(false)
+    setIsSubmitting(true)
+
+    try {
+      const reviewData: CreateReviewData = {
+        song_id: selectedSong!.id,
+        song_title: selectedSong!.title,
+        song_artist: selectedSong!.artist,
+        song_album: selectedSong!.album,
+        song_cover_url: selectedSong!.coverArt,
+        song_duration: selectedSong!.duration,
+        song_preview_url: selectedSong!.previewUrl,
+        song_deezer_url: selectedSong!.deezerUrl,
+        title: reviewTitle.trim(),
+        content: reviewContent.trim(),
+        rating,
+      }
+
+      const result = await createReview(reviewData)
+
+      if (result.error) {
+        toast.error("Error creating review", {
+          description: result.error,
+        })
+      } else {
+        toast.success("Review created!", {
+          description: "Your review has been published successfully.",
+        })
+        resetForm()
+        onOpenChange(false)
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error)
+      toast.error("Error creating review", {
+        description: "Failed to create review. Please try again.",
+      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -118,17 +147,18 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
             size="sm"
             onClick={handleClose}
             className="text-muted-foreground hover:text-foreground text-sm sm:text-base"
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <h2 className="text-base sm:text-lg font-semibold">Create Review</h2>
           <Button
             size="sm"
-            disabled={!isValid}
+            disabled={!isValid || isSubmitting}
             onClick={handleSubmit}
             className="px-4 sm:px-6 font-medium text-sm sm:text-base"
           >
-            Post
+            {isSubmitting ? "Posting..." : "Post"}
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -237,6 +267,7 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                   size="icon"
                   onClick={() => setSelectedSong(null)}
                   className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  disabled={isSubmitting}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -254,6 +285,7 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                       onMouseEnter={() => setHoveredRating(star)}
                       onMouseLeave={() => setHoveredRating(0)}
                       className="p-1 hover:scale-110 transition-transform"
+                      disabled={isSubmitting}
                     >
                       <Star
                         className={cn(
@@ -277,6 +309,7 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                   onChange={(e) => setReviewTitle(e.target.value)}
                   className="text-sm sm:text-base h-10 sm:h-12"
                   maxLength={maxTitleLength}
+                  disabled={isSubmitting}
                 />
                 <div className="flex justify-end">
                   <span
@@ -299,6 +332,7 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                   onChange={(e) => setReviewContent(e.target.value)}
                   className="min-h-[100px] sm:min-h-[120px] resize-none text-sm sm:text-base leading-relaxed"
                   maxLength={maxContentLength}
+                  disabled={isSubmitting}
                 />
                 <div className="flex justify-end">
                   <span

@@ -9,6 +9,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { HeaderAuth } from "@/components/header-auth"
 import { FloatingActionButtons } from "@/components/floating-action-buttons"
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb"
+import { Toaster } from "@/components/ui/sonner"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,6 +24,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "VERN - Music Platform",
   description: "Social Network for Music, Reviews, and Independent Discovery",
+  generator: "Next.js",
+  applicationName: "VERN",
+  keywords: ["Music", "Reviews", "Social Network", "Independent Artists", "Discover Music"],
 }
 
 export default function RootLayout({
@@ -47,6 +51,7 @@ export default function RootLayout({
               </div>
             </header>
             <main className="flex-1">{children}</main>
+            <Toaster />
           </SidebarInset>
           <FloatingActionButtons />
         </SidebarProvider>
