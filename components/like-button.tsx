@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useRef } from "react"
 import { Heart } from "lucide-react"
 import { toggleLike } from "@/app/actions/likes"
 import { toast } from "sonner"
@@ -16,10 +16,15 @@ interface LikeButtonProps {
 export function LikeButton({ reviewId, initialLikeCount, initialIsLiked, className }: LikeButtonProps) {
   const [likeCount, setLikeCount] = useState(initialLikeCount)
   const [isLiked, setIsLiked] = useState(initialIsLiked)
-  const [isPending, startTransition] = useTransition()
+  const debounceRef = useRef<NodeJS.Timeout>()
 
   const handleToggleLike = () => {
-    if (isPending) return
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+
+    const previousIsLiked = isLiked
+    const previousLikeCount = likeCount
 
     const newIsLiked = !isLiked
     const newLikeCount = newIsLiked ? likeCount + 1 : likeCount - 1
@@ -27,33 +32,39 @@ export function LikeButton({ reviewId, initialLikeCount, initialIsLiked, classNa
     setIsLiked(newIsLiked)
     setLikeCount(newLikeCount)
 
-    startTransition(async () => {
-      const result = await toggleLike(reviewId)
-
-      if (!result.success) {
-        setIsLiked(!newIsLiked)
-        setLikeCount(likeCount)
-        toast.error("Error adding like")
-      } else {
-        const actionIsLiked = result.action === "liked"
-        toast.success(actionIsLiked ? "Review liked!" : "Like removed")
-        setIsLiked(actionIsLiked)
-      }
-    })
+    debounceRef.current = setTimeout(() => {
+      toggleLike(reviewId)
+        .then((result) => {
+          if (!result.success) {
+            setIsLiked(previousIsLiked)
+            setLikeCount(previousLikeCount)
+            toast.error("No se pudo dar like")
+          }
+        })
+        .catch(() => {
+          setIsLiked(previousIsLiked)
+          setLikeCount(previousLikeCount)
+          toast.error("Error de conexión")
+        })
+    }, 150)
   }
 
   return (
     <button
       onClick={handleToggleLike}
-      disabled={isPending}
       className={cn(
-        "flex items-center gap-1 hover:text-red-500 transition-colors disabled:opacity-50",
+        "flex items-center gap-1 hover:text-red-500 transition-all duration-200 group",
         isLiked ? "text-red-500" : "text-muted-foreground",
         className,
       )}
     >
-      <Heart className={cn("h-3 w-3 transition-all", isLiked ? "fill-current" : "", isPending ? "scale-110" : "")} />
-      <span className="text-xs">{likeCount}</span>
+      <Heart
+        className={cn(
+          "h-3 w-3 transition-all duration-200 group-hover:scale-110",
+          isLiked ? "fill-current scale-110" : "",
+        )}
+      />
+      <span className="text-xs font-medium">{likeCount}</span>
     </button>
   )
 }
