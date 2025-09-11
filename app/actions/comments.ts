@@ -64,22 +64,44 @@ export async function getComments(reviewId: string) {
   try {
     const supabase = await createServerSupabaseClient()
 
+    // Try optimized query first
     const { data: comments, error } = await supabase
+      .from("review_comments")
+      .select(`
+        *,
+        profiles (
+          username,
+          display_name,
+          avatar_url,
+          is_verified
+        )
+      `)
+      .eq("review_id", reviewId)
+      .order("created_at", { ascending: true })
+
+    // If foreign key relationship works, return the result
+    if (!error) {
+      return { success: true, comments: comments || [] }
+    }
+
+    // Fallback to current method if foreign keys aren't ready
+    console.log("Using fallback method for comments")
+    const { data: fallbackComments, error: fallbackError } = await supabase
       .from("review_comments")
       .select("*")
       .eq("review_id", reviewId)
       .order("created_at", { ascending: true })
 
-    if (error) {
-      console.error("Error fetching comments:", error)
+    if (fallbackError) {
+      console.error("Error fetching comments:", fallbackError)
       return { success: false, error: "Failed to fetch comments" }
     }
 
-    if (!comments || comments.length === 0) {
+    if (!fallbackComments || fallbackComments.length === 0) {
       return { success: true, comments: [] }
     }
 
-    const userIds = [...new Set(comments.map((comment) => comment.user_id))]
+    const userIds = [...new Set(fallbackComments.map((comment) => comment.user_id))]
 
     const { data: profiles } = await supabase
       .from("profiles")
@@ -91,7 +113,7 @@ export async function getComments(reviewId: string) {
       profileMap.set(profile.id, profile)
     })
 
-    const commentsWithProfiles = comments.map((comment) => ({
+    const commentsWithProfiles = fallbackComments.map((comment) => ({
       ...comment,
       profiles: profileMap.get(comment.user_id) || null,
     }))
