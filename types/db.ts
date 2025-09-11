@@ -92,6 +92,42 @@ export interface Database {
           updated_at?: string
         }
       }
+      likes: {
+        Row: {
+          id: string
+          user_id: string
+          review_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          review_id: string
+        }
+        Update: {
+          // No updates needed for likes
+        }
+      }
+      review_comments: {
+        Row: {
+          id: string
+          user_id: string
+          review_id: string
+          content: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          review_id: string
+          content: string
+        }
+        Update: {
+          content?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }

@@ -1,9 +1,11 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Music, Star, Users, TrendingUp, Play, MessageCircle, Plus } from "lucide-react"
+import { Music, Star, Users, TrendingUp, Play, Plus } from "lucide-react"
 import { LikeButton } from "@/components/like-button"
+import { CommentButton } from "@/components/comment-button"
 import { getLikeStatus } from "@/app/actions/likes"
+import { getCommentCount } from "@/app/actions/comments"
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -25,13 +27,18 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(6)
 
-  const reviewsWithLikes = await Promise.all(
+  const reviewsWithLikesAndComments = await Promise.all(
     (recentReviews || []).map(async (review) => {
-      const likeStatus = await getLikeStatus(review.id, user.id)
+      const [likeStatus, commentCount] = await Promise.all([
+        getLikeStatus(review.id, user.id),
+        getCommentCount(review.id),
+      ])
+
       return {
         ...review,
         likeCount: likeStatus.success && likeStatus.data ? likeStatus.data.totalLikes : 0,
         isLiked: likeStatus.success && likeStatus.data ? likeStatus.data.isLiked : false,
+        commentCount: commentCount.success ? commentCount.count : 0,
       }
     }),
   )
@@ -109,9 +116,9 @@ export default async function DashboardPage() {
             </Button>
           </div>
 
-          {reviewsWithLikes && reviewsWithLikes.length > 0 ? (
+          {reviewsWithLikesAndComments && reviewsWithLikesAndComments.length > 0 ? (
             <div className="space-y-4">
-              {reviewsWithLikes.slice(0, 3).map((review) => (
+              {reviewsWithLikesAndComments.slice(0, 3).map((review) => (
                 <Card key={review.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
@@ -153,10 +160,7 @@ export default async function DashboardPage() {
                             initialLikeCount={review.likeCount}
                             initialIsLiked={review.isLiked}
                           />
-                          <button className="flex items-center gap-1 hover:text-foreground transition-colors">
-                            <MessageCircle className="h-3 w-3" />
-                            <span>3</span>
-                          </button>
+                          <CommentButton reviewId={review.id} initialCommentCount={review.commentCount} />
                         </div>
                       </div>
                     </div>
