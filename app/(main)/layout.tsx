@@ -7,7 +7,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { HeaderAuth } from "@/components/header-auth"
-import { FloatingActionButtons } from "@/components/floating-action-buttons"
+import { BottomNavigation } from "@/components/bottom-navigation"
 import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb"
 import { Toaster } from "@/components/ui/sonner"
 
@@ -53,7 +53,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Toaster />
           </SidebarInset>
-          <FloatingActionButtons />
+          <BottomNavigation />
         </SidebarProvider>
       </body>
     </html>

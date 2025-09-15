@@ -8,6 +8,9 @@ import { GradientAvatar } from "@/components/gradient-avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FollowButton } from "@/components/follow-button"
+import { FollowStats } from "@/components/follow-stats"
+import { SuggestedUsers } from "@/components/suggested-users"
 import {
   Instagram,
   Verified,
@@ -28,7 +31,7 @@ import {
 } from "lucide-react"
 import { FaSpotify } from "react-icons/fa"
 import React from "react"
-import { Users, TrendingUp } from "lucide-react" // Import missing icons
+import { Users, TrendingUp } from "lucide-react"
 
 interface ProfilePageClientProps {
   initialProfileData: {
@@ -53,6 +56,11 @@ interface ProfilePageClientProps {
     isLink?: boolean
   }[]
   initialReviews: any[]
+  initialIsFollowing?: boolean
+  followersCount?: number
+  followingCount?: number
+  followers?: any[]
+  following?: any[]
 }
 
 function ProfileSkeleton() {
@@ -77,9 +85,13 @@ export function ProfilePageClient({
   currentUserId,
   breadcrumbs,
   initialReviews,
+  initialIsFollowing = false,
+  followersCount = 0,
+  followingCount = 0,
+  followers = [],
+  following = [],
 }: ProfilePageClientProps) {
   const [profile, setProfile] = useState(initialProfileData)
-  const [isFollowing, setIsFollowing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showLinksModal, setShowLinksModal] = useState(false)
 
@@ -98,10 +110,6 @@ export function ProfilePageClient({
     profile.instagram_url && { url: profile.instagram_url, label: "Instagram", icon: Instagram },
   ].filter(Boolean) as Array<{ url: string; label: string; icon: any }>
 
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing)
-  }
-
   const handleCopyProfileLink = () => {
     navigator.clipboard.writeText(window.location.href)
   }
@@ -115,22 +123,18 @@ export function ProfilePageClient({
   }
 
   const handleAccountSettings = () => {
-    // Navigate to account settings
     window.location.href = "/settings"
   }
 
   const handlePrivacySettings = () => {
-    // Navigate to privacy settings
     alert("Privacy settings")
   }
 
   const handleNotificationSettings = () => {
-    // Navigate to notification settings
     alert("Notification settings")
   }
 
   const handleExportData = () => {
-    // Export user data
     alert("Export data")
   }
 
@@ -148,7 +152,6 @@ export function ProfilePageClient({
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="relative">
-        {/* Cover Photo */}
         <div className="h-52 md:h-56 lg:h-64 relative overflow-hidden">
           {profile.banner_url ? (
             <img src={profile.banner_url || "/placeholder.svg"} alt="Cover" className="w-full h-full object-cover" />
@@ -156,15 +159,12 @@ export function ProfilePageClient({
             <div className="w-full h-full bg-gradient-to-br from-zinc-800 via-zinc-900 to-black" />
           )}
 
-          {/* Gradient overlay for better text readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         </div>
 
-        {/* Profile Header */}
         <div className="relative -mt-14 md:-mt-16 lg:-mt-20">
           <div className="max-w-7xl mx-auto px-5 md:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-5 lg:gap-6">
-              {/* Profile Picture with subtle border */}
               <div className="relative">
                 <div className="w-29 h-29 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full overflow-hidden border border-zinc-700/50 bg-zinc-900 shadow-2xl">
                   {profile.avatar_url ? (
@@ -184,10 +184,8 @@ export function ProfilePageClient({
                 </div>
               </div>
 
-              {/* Profile Info */}
               <div className="flex-1 md:pb-3 lg:pb-4">
                 <div className="space-y-2 md:space-y-2.5 lg:space-y-3">
-                  {/* Name and verification */}
                   <div className="flex items-center gap-2 md:gap-2.5 lg:gap-3 flex-wrap">
                     <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight">
                       {displayName}
@@ -209,24 +207,19 @@ export function ProfilePageClient({
                     )}
                   </div>
 
-                  {/* Username */}
                   {showUsername && <p className="text-zinc-300 text-base md:text-lg lg:text-xl">@{profile.username}</p>}
 
-                  {/* Stats */}
-                  <div className="flex items-center gap-4 md:gap-5 lg:gap-6 text-sm md:text-sm lg:text-base">
-                    <button className="hover:text-white transition-colors cursor-pointer">
-                      <span className="text-white font-semibold">156</span>
-                      <span className="text-zinc-400 ml-1">Following</span>
-                    </button>
-                    <button className="hover:text-white transition-colors cursor-pointer">
-                      <span className="text-white font-semibold">89</span>
-                      <span className="text-zinc-400 ml-1">Followers</span>
-                    </button>
-                  </div>
+                  <FollowStats
+                    userId={profile.id}
+                    followersCount={followersCount}
+                    followingCount={followingCount}
+                    currentUserId={currentUserId}
+                    followers={followers}
+                    following={following}
+                  />
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-2 md:gap-2.5 lg:gap-3 md:pb-3 lg:pb-4">
                 {isOwnProfile ? (
                   <>
@@ -283,16 +276,11 @@ export function ProfilePageClient({
                   </>
                 ) : (
                   <>
-                    <Button
-                      onClick={handleFollow}
-                      className={`rounded-full h-10 md:h-11 lg:h-12 font-semibold border-0 px-6 md:px-7 lg:px-8 transition-all text-sm md:text-sm lg:text-base ${
-                        isFollowing
-                          ? "bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700 text-white"
-                          : "bg-white text-black hover:bg-zinc-100"
-                      }`}
-                    >
-                      {isFollowing ? "Following" : "Follow"}
-                    </Button>
+                    <FollowButton
+                      targetUserId={profile.id}
+                      initialIsFollowing={initialIsFollowing}
+                      currentUserId={currentUserId}
+                    />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button className="bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700 text-white border-0 rounded-full h-10 md:h-11 lg:h-12 w-10 md:w-11 lg:w-12">
@@ -330,12 +318,9 @@ export function ProfilePageClient({
           </div>
         </div>
 
-        {/* Content Section */}
         <div className="max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-7 lg:py-8">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 md:gap-7 lg:gap-8">
-            {/* Main Content */}
             <div className="min-w-0 w-full">
-              {/* Bio and Details */}
               {(profile.bio || profile.location || socialLinks.length > 0) && (
                 <div className="space-y-3 md:space-y-3.5 lg:space-y-4 mb-6 md:mb-7 lg:mb-8 p-4 md:p-5 lg:p-6 bg-zinc-900/50 backdrop-blur-sm rounded-xl md:rounded-xl lg:rounded-2xl border border-zinc-800/50">
                   {profile.bio && (
@@ -407,7 +392,6 @@ export function ProfilePageClient({
                 </div>
               )}
 
-              {/* Navigation Tabs */}
               <Tabs defaultValue="reviews" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 bg-transparent border-b border-zinc-800/50 rounded-none h-auto p-0 mb-6 md:mb-7 lg:mb-8">
                   {tabs.map((tab) => {
@@ -506,87 +490,9 @@ export function ProfilePageClient({
               </Tabs>
             </div>
 
-            {/* Sidebar */}
             <div className="w-full lg:w-[300px] hidden lg:block">
               <div className="space-y-4 md:space-y-5 lg:space-y-6 sticky top-6">
-                {/* Statistics Card */}
-                <div className="w-full bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50 rounded-xl md:rounded-xl lg:rounded-2xl p-4 md:p-5 lg:p-6">
-                  <h3 className="font-semibold text-white mb-3 md:mb-3.5 lg:mb-4 text-sm md:text-sm lg:text-base">
-                    Statistics
-                  </h3>
-                  <div className="space-y-3 md:space-y-3.5 lg:space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-zinc-400 text-xs md:text-sm lg:text-sm">Reviews</span>
-                      <span className="text-white font-semibold text-sm md:text-sm lg:text-base">
-                        {initialReviews.length}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-zinc-400 text-xs md:text-sm lg:text-sm">This Year</span>
-                      <span className="text-white font-semibold text-sm md:text-sm lg:text-base">12</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-zinc-400 text-xs md:text-sm lg:text-sm">Avg Rating</span>
-                      <span className="text-white font-semibold text-sm md:text-sm lg:text-base">4.2</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Suggested for You Section */}
-                <div className="w-full bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50 rounded-xl md:rounded-xl lg:rounded-2xl p-4 md:p-5 lg:p-6">
-                  <h3 className="font-semibold text-white mb-3 md:mb-3.5 lg:mb-4 text-sm md:text-sm lg:text-base">
-                    Suggested for You
-                  </h3>
-                  <div className="space-y-3 md:space-y-3.5 lg:space-y-4">
-                    {/* Suggested User 1 */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
-                        <GradientAvatar userId="user1" size="sm" className="w-full h-full" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-xs md:text-sm font-medium truncate">Alex Rivera</p>
-                        <p className="text-zinc-400 text-xs truncate">@alexmusic</p>
-                      </div>
-                      <Button className="bg-white text-black hover:bg-zinc-100 text-xs px-3 py-1 h-7 rounded-full font-medium">
-                        Follow
-                      </Button>
-                    </div>
-
-                    {/* Suggested User 2 */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
-                        <GradientAvatar userId="user2" size="sm" className="w-full h-full" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-xs md:text-sm font-medium truncate">Maya Chen</p>
-                        <p className="text-zinc-400 text-xs truncate">@mayabeats</p>
-                      </div>
-                      <Button className="bg-white text-black hover:bg-zinc-100 text-xs px-3 py-1 h-7 rounded-full font-medium">
-                        Follow
-                      </Button>
-                    </div>
-
-                    {/* Suggested User 3 */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
-                        <GradientAvatar userId="user3" size="sm" className="w-full h-full" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-xs md:text-sm font-medium truncate">Jordan Smith</p>
-                        <p className="text-zinc-400 text-xs truncate">@jordanvibes</p>
-                      </div>
-                      <Button className="bg-white text-black hover:bg-zinc-100 text-xs px-3 py-1 h-7 rounded-full font-medium">
-                        Follow
-                      </Button>
-                    </div>
-
-                    {/* View More Button */}
-                    <Button className="w-full bg-zinc-800/80 hover:bg-zinc-700 text-white border-0 justify-center rounded-lg md:rounded-lg lg:rounded-xl text-xs md:text-sm lg:text-sm h-8 md:h-9 lg:h-10 mt-3">
-                      <Users className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 mr-2" />
-                      Discover More
-                    </Button>
-                  </div>
-                </div>
+                <SuggestedUsers currentUserId={currentUserId} />
               </div>
             </div>
           </div>

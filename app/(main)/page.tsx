@@ -1,11 +1,12 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Music, Star, Users, TrendingUp, Play, Plus } from "lucide-react"
-import { LikeButton } from "@/components/like-button"
-import { CommentButton } from "@/components/comment-button"
-import { getLikeStatus } from "@/app/actions/likes"
-import { getCommentCount } from "@/app/actions/comments"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Music, Star, Users, TrendingUp, Play } from "lucide-react"
+import { ActivityFeed } from "@/components/activity-feed"
+import { SuggestedUsers } from "@/components/suggested-users"
+import { getFollowCounts } from "@/app/actions/follows"
+import Link from "next/link"
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient()
@@ -17,217 +18,141 @@ export default async function DashboardPage() {
     return null
   }
 
-  // Fetch user profile
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
-  // Fetch recent reviews
-  const { data: recentReviews } = await supabase
+  const { count: reviewCount } = await supabase
     .from("reviews")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(6)
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
 
-  const reviewsWithLikesAndComments = await Promise.all(
-    (recentReviews || []).map(async (review) => {
-      const [likeStatus, commentCount] = await Promise.all([
-        getLikeStatus(review.id, user.id),
-        getCommentCount(review.id),
-      ])
-
-      return {
-        ...review,
-        likeCount: likeStatus.success && likeStatus.data ? likeStatus.data.totalLikes : 0,
-        isLiked: likeStatus.success && likeStatus.data ? likeStatus.data.isLiked : false,
-        commentCount: commentCount.success ? commentCount.count : 0,
-      }
-    }),
-  )
+  const followCounts = await getFollowCounts(user.id)
 
   const breadcrumbs = [{ label: "Dashboard", isLink: false }]
 
   return (
-    <div className="space-y-8 p-6">
-      {/* Welcome Section */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">
-          Welcome back, {profile?.display_name || profile?.username || "Music Lover"}
-        </h1>
-        <p className="text-muted-foreground">
-          Discover new music, share your thoughts, and connect with fellow music enthusiasts.
-        </p>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Your Reviews</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{recentReviews?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">Total reviews written</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Following</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">Artists & reviewers</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Month</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">New discoveries</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Listening Time</CardTitle>
-            <Play className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">42h</div>
-            <p className="text-xs text-muted-foreground">This week</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Activity */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Recent Reviews</h2>
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Write Review
-            </Button>
-          </div>
-
-          {reviewsWithLikesAndComments && reviewsWithLikesAndComments.length > 0 ? (
-            <div className="space-y-4">
-              {reviewsWithLikesAndComments.slice(0, 3).map((review) => (
-                <Card key={review.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-16 h-16 bg-muted rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden">
-                        {review.song_cover_url ? (
-                          <img
-                            src={review.song_cover_url || "/placeholder.svg"}
-                            alt={review.song_title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Music className="h-8 w-8 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold text-foreground">{review.song_title}</h3>
-                            <p className="text-sm text-muted-foreground">{review.song_artist}</p>
-                            <div className="flex items-center gap-1 mt-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
-                                  key={star}
-                                  className={`w-4 h-4 ${
-                                    star <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(review.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{review.content}</p>
-                        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                          <LikeButton
-                            reviewId={review.id}
-                            initialLikeCount={review.likeCount}
-                            initialIsLiked={review.isLiked}
-                          />
-                          <CommentButton reviewId={review.id} initialCommentCount={review.commentCount} />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="border-dashed border-2 border-muted-foreground/20">
-              <CardContent className="p-12 text-center">
-                <Music className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No reviews yet</h3>
-                <p className="text-muted-foreground mb-4">Start your musical journey by writing your first review</p>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Write Your First Review
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-7 lg:py-8">
+        {/* Welcome Section */}
+        <div className="space-y-2 mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
+            Welcome back, {profile?.display_name || profile?.username || "Music Lover"}
+          </h1>
+          <p className="text-zinc-400">
+            Discover new music, share your thoughts, and connect with fellow music enthusiasts.
+          </p>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Trending */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Trending Now</CardTitle>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+          <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-400">Your Reviews</CardTitle>
+              <Star className="h-4 w-4 text-zinc-400" />
             </CardHeader>
-            <CardContent className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-muted rounded-lg flex-shrink-0 flex items-center justify-center">
-                    <Music className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground truncate">Trending Song {i}</p>
-                    <p className="text-sm text-muted-foreground truncate">Popular Artist</p>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    <Play className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{reviewCount || 0}</div>
+              <p className="text-xs text-zinc-500">Total reviews written</p>
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
+          <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-400">Following</CardTitle>
+              <Users className="h-4 w-4 text-zinc-400" />
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button className="w-full justify-start bg-transparent" variant="outline">
-                <Star className="h-4 w-4 mr-2" />
-                Write a Review
-              </Button>
-              <Button className="w-full justify-start bg-transparent" variant="outline">
-                <Music className="h-4 w-4 mr-2" />
-                Discover Music
-              </Button>
-              <Button className="w-full justify-start bg-transparent" variant="outline">
-                <Users className="h-4 w-4 mr-2" />
-                Find Friends
-              </Button>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{followCounts.followingCount}</div>
+              <p className="text-xs text-zinc-500">Artists & reviewers</p>
             </CardContent>
           </Card>
+
+          <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-400">Followers</CardTitle>
+              <TrendingUp className="h-4 w-4 text-zinc-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{followCounts.followersCount}</div>
+              <p className="text-xs text-zinc-500">People following you</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-zinc-900/50 border-zinc-800/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-zinc-400">This Month</CardTitle>
+              <Play className="h-4 w-4 text-zinc-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">8</div>
+              <p className="text-xs text-zinc-500">New discoveries</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 md:gap-8">
+          {/* Activity Feed */}
+          <div className="min-w-0">
+            <Tabs defaultValue="following" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-zinc-900/50 border border-zinc-800/50 rounded-lg mb-6">
+                <TabsTrigger
+                  value="following"
+                  className="data-[state=active]:bg-white data-[state=active]:text-black text-zinc-400"
+                >
+                  Following
+                </TabsTrigger>
+                <TabsTrigger
+                  value="discover"
+                  className="data-[state=active]:bg-white data-[state=active]:text-black text-zinc-400"
+                >
+                  Discover
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="following" className="mt-0">
+                <ActivityFeed currentUserId={user.id} showFollowingOnly={true} />
+              </TabsContent>
+
+              <TabsContent value="discover" className="mt-0">
+                <ActivityFeed currentUserId={user.id} showFollowingOnly={false} />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Sidebar */}
+          <div className="w-full lg:w-[300px]">
+            <div className="space-y-6 sticky top-6">
+              {/* Suggested Users */}
+              <SuggestedUsers currentUserId={user.id} />
+
+              {/* Quick Actions */}
+              <Card className="bg-zinc-900/50 border-zinc-800/50">
+                <CardHeader>
+                  <CardTitle className="text-lg text-white">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button asChild className="w-full justify-start bg-white text-black hover:bg-zinc-100">
+                    <Link href="/search">
+                      <Star className="h-4 w-4 mr-2" />
+                      Write a Review
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full justify-start bg-zinc-800/80 hover:bg-zinc-700 text-white border-0">
+                    <Link href="/search">
+                      <Music className="h-4 w-4 mr-2" />
+                      Discover Music
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full justify-start bg-zinc-800/80 hover:bg-zinc-700 text-white border-0">
+                    <Link href="/discover">
+                      <Users className="h-4 w-4 mr-2" />
+                      Find People
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>

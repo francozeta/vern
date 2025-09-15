@@ -13,6 +13,7 @@ import { AlertCircle, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { updateProfileSettings } from "@/app/actions/settings"
 import { uploadProfileImageClient } from "@/lib/supabase/upload"
+import { uploadBannerImageClient } from "@/lib/supabase/upload"
 import { profileSettingsSchema, type ProfileSettingsInput } from "@/lib/validations/settings"
 
 interface ProfileTabProps {
@@ -95,9 +96,11 @@ export function ProfileTab({ profile }: ProfileTabProps) {
       // Upload banner if selected
       if (selectedBanner) {
         setUploadProgress("Uploading banner...")
-        // TODO: Implement banner upload similar to avatar
-        // For now, we'll use a placeholder
-        finalBannerUrl = URL.createObjectURL(selectedBanner)
+        const { url, error: uploadError } = await uploadBannerImageClient(selectedBanner, profile.id)
+        if (uploadError) {
+          throw new Error(`Banner upload failed: ${uploadError}`)
+        }
+        finalBannerUrl = url || ""
       }
 
       setUploadProgress("Updating profile...")
@@ -196,7 +199,7 @@ export function ProfileTab({ profile }: ProfileTabProps) {
           />
           {errors.bio && (
             <div className="flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="size-4" />
+              <AlertCircle className="size-4 flex-shrink-0" />
               {errors.bio.message}
             </div>
           )}
@@ -216,7 +219,7 @@ export function ProfileTab({ profile }: ProfileTabProps) {
           </div>
           {errors.location && (
             <div className="flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="size-4" />
+              <AlertCircle className="size-4 flex-shrink-0" />
               {errors.location.message}
             </div>
           )}
