@@ -14,8 +14,9 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
   } = await supabase.auth.getUser()
 
   let userData = null
+  let userRole: "listener" | "artist" | "both" = "listener"
+
   if (user) {
-    // Get user profile data
     const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
     userData = {
@@ -23,17 +24,23 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
       email: user.email || "",
       avatar: profile?.avatar_url || "",
       userId: user.id,
-      username: profile?.username, // Add username
+      username: profile?.username,
     }
+
+    userRole = profile?.role || "listener"
   }
 
-  // Serialize navigation data to avoid passing functions to client components
   const navMainData = [
+    {
+      title: "Home",
+      url: "/",
+      icon: "Home",
+      isActive: true,
+    },
     {
       title: "Discover",
       url: "#",
       icon: "SquareTerminal",
-      isActive: true,
       items: [
         {
           title: "New Releases",
@@ -55,8 +62,13 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
     },
     {
       title: "Reviews",
-      url: "#",
+      url: "/reviews",
       icon: "BookOpen",
+    },
+    {
+      title: "Search",
+      url: "/search",
+      icon: "Search",
     },
     {
       title: "Library",
@@ -88,18 +100,26 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
     },
   ]
 
-  const projectsData = [
-    {
-      name: "Upload Music",
-      url: "#",
-      icon: "Frame",
-    },
-    {
-      name: "Artist Dashboard",
-      url: "#",
-      icon: "PieChart",
-    },
-  ]
+  const projectsData =
+    userRole === "artist" || userRole === "both"
+      ? [
+          {
+            name: "Upload Music",
+            url: "/upload",
+            icon: "Upload",
+          },
+          {
+            name: "Artist Dashboard",
+            url: "/artist/dashboard",
+            icon: "PieChart",
+          },
+          {
+            name: "My Uploads",
+            url: "/artist/uploads",
+            icon: "Music",
+          },
+        ]
+      : []
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -108,7 +128,7 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMainData} />
-        <NavProjects projects={projectsData} />
+        {projectsData.length > 0 && <NavProjects projects={projectsData} />}
       </SidebarContent>
       <SidebarFooter>{userData && <NavUser user={userData} />}</SidebarFooter>
       <SidebarRail />

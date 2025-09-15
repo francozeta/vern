@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, AudioWaveform, BookOpen, Settings2, SquareTerminal } from "lucide-react"
+import { ChevronRight, AudioWaveform, BookOpen, Settings2, SquareTerminal, Home, Search } from "lucide-react"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
@@ -16,6 +16,8 @@ import {
 
 // Icon mapping
 const iconMap = {
+  Home,
+  Search,
   SquareTerminal,
   BookOpen,
   AudioWaveform,
