@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Upload, Feather } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useState, useEffect } from "react"
-import { ReviewModal } from "@/components/review-modal"
+import { ReviewModal } from "@/components/modals/review-modal"
 import { createClient } from "@/lib/supabase/client"
 
 export function FloatingActionButtons() {

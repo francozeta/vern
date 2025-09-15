@@ -4,13 +4,13 @@ import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { GradientAvatar } from "@/components/gradient-avatar"
+import { GradientAvatar } from "@/components/user/gradient-avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FollowButton } from "@/components/follow-button"
-import { FollowStats } from "@/components/follow-stats"
-import { SuggestedUsers } from "@/components/suggested-users"
+import { FollowButton } from "@/components/user/follow-button"
+import { FollowStats } from "@/components/user/follow-stats"
+import { SuggestedUsers } from "@/components/user/suggested-users"
 import {
   Instagram,
   Verified,

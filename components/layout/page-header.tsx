@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb"
+import { DynamicBreadcrumb } from "@/components/navigation/dynamic-breadcrumb"
 
 interface PageHeaderProps {
   breadcrumbs?: {

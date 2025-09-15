@@ -1,9 +1,9 @@
 import type * as React from "react"
 
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
-import { AppBranding } from "@/components/app-branding"
+import { NavMain } from "@/components/navigation/nav-main"
+import { NavProjects } from "@/components/navigation/nav-projects"
+import { NavUser } from "@/components/navigation/nav-user"
+import { AppBranding } from "@/components/layout/app-branding"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 

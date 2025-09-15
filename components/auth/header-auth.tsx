@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
-import { HeaderAuthClient } from "@/components/header-auth-client"
+import { HeaderAuthClient } from "@/components/auth/header-auth-client"
 
 export async function HeaderAuth() {
   const supabase = await createServerSupabaseClient()

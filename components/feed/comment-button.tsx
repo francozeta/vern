@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { CommentsModal } from "./comments-modal"
+import { CommentsModal } from "../modals/comments-modal"
 
 interface CommentButtonProps {
   reviewId: string

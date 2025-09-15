@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
-import { ProfilePageClient } from "@/components/profile-page-client"
+import { ProfilePageClient } from "@/components/user/profile-page-client"
 import { getFollowStatus, getFollowCounts, getFollowers, getFollowing } from "@/app/actions/follows"
 
 export default async function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {

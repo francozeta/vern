@@ -2,7 +2,7 @@
 import { Home, Search, Library, Radio, Plus } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useState, useEffect } from "react"
-import { ReviewModal } from "@/components/review-modal"
+import { ReviewModal } from "@/components/modals/review-modal"
 import { createClient } from "@/lib/supabase/client"
 import { usePathname } from "next/navigation"
 import Link from "next/link"

@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { GradientAvatar } from "@/components/gradient-avatar"
+import { GradientAvatar } from "@/components/user/gradient-avatar"
 import { MessageCircle, Send, Trash2, Verified } from "lucide-react"
 import { createComment, getComments, deleteComment } from "@/app/actions/comments"
 import { toast } from "sonner"

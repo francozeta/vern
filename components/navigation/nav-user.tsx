@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
-import { GradientAvatar } from "@/components/gradient-avatar"
+import { GradientAvatar } from "@/components/user/gradient-avatar"
 import { signOut } from "@/app/actions/auth"
 
 export function NavUser({

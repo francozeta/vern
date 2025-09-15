@@ -12,7 +12,7 @@ import { onboardingSchema, type OnboardingInput } from "@/lib/validations/auth"
 import { SiVercel } from "react-icons/si"
 import { AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { AvatarUpload } from "@/components/avatar-upload" // Import the refactored AvatarUpload
+import { AvatarUpload } from "@/components/user/avatar-upload" // Import the refactored AvatarUpload
 
 interface OnboardingFormProps {
   user: any

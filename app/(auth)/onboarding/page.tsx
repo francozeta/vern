@@ -1,4 +1,4 @@
-import { OnboardingForm } from "@/components/onboarding-form"
+import { OnboardingForm } from "@/components/auth/onboarding-form"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 

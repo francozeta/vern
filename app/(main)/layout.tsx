@@ -3,12 +3,12 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "../globals.css"
 
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/navigation/app-sidebar"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { HeaderAuth } from "@/components/header-auth"
-import { BottomNavigation } from "@/components/bottom-navigation"
-import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumb"
+import { HeaderAuth } from "@/components/auth/header-auth"
+import { BottomNavigation } from "@/components/navigation/bottom-navigation"
+import { DynamicBreadcrumb } from "@/components/navigation/dynamic-breadcrumb"
 import { Toaster } from "@/components/ui/sonner"
 
 const geistSans = Geist({

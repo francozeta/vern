@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { GradientAvatar } from "@/components/gradient-avatar"
-import { FollowButton } from "@/components/follow-button"
+import { GradientAvatar } from "@/components/user/gradient-avatar"
+import { FollowButton } from "@/components/user/follow-button"
 import { Verified, Mic, Headphones } from "lucide-react"
 import Link from "next/link"
 
