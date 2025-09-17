@@ -1,5 +1,5 @@
 "use client"
-import { Home, Search, Library, Radio, Plus } from "lucide-react"
+import { Home, Search, Library, BookOpen, Plus } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useState, useEffect } from "react"
 import { ReviewModal } from "@/components/modals/review-modal"
@@ -61,9 +61,9 @@ export function BottomNavigation() {
       active: isActive("/search"),
     },
     {
-      icon: Radio,
-      href: "/radio",
-      active: isActive("/radio"),
+      icon: BookOpen,
+      href: "/reviews",
+      active: isActive("/reviews"),
     },
     {
       icon: Library,

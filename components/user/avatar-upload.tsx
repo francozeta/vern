@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { GradientAvatar } from "@/components/gradient-avatar"
+import { GradientAvatar } from "@/components/user/gradient-avatar"
 import { Camera, Upload, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 

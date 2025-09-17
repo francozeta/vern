@@ -64,6 +64,24 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
       title: "Reviews",
       url: "/reviews",
       icon: "BookOpen",
+      items: [
+        {
+          title: "All Reviews",
+          url: "/reviews",
+        },
+        {
+          title: "Trending",
+          url: "/reviews?filter=trending",
+        },
+        {
+          title: "Top Rated",
+          url: "/reviews?filter=top-rated",
+        },
+        {
+          title: "Recent",
+          url: "/reviews?filter=recent",
+        },
+      ],
     },
     {
       title: "Search",
@@ -86,6 +104,10 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
         {
           title: "Recently Played",
           url: "#",
+        },
+        {
+          title: "My Reviews",
+          url: userData ? `/user/${userData.username}` : "#",
         },
         {
           title: "Saved Reviews",
