@@ -7,14 +7,34 @@ import { GradientAvatar } from "@/components/user/gradient-avatar"
 import { LikeButton } from "@/components/feed/like-button"
 import { CommentButton } from "@/components/feed/comment-button"
 import { FollowButton } from "@/components/user/follow-button"
-import { Verified, Mic, Headphones, Star, Music, Play, MoreHorizontal, Share, ExternalLink } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Verified, Mic, Headphones, Star, Music, Play, MoreHorizontal, Share, ExternalLink, Trash2 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { deleteReview } from "@/app/actions/reviews"
+import { toast } from "sonner"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 interface ReviewCardProps {
   review: {
     id: string
+    slug?: string // Added slug support
     title: string
     content: string
     rating: number
@@ -53,7 +73,10 @@ export function ReviewCard({
   showActions = true,
 }: ReviewCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const isOwnReview = currentUserId === review.user.id
+
+  const reviewUrl = `/reviews/${review.id}` // Simplified to only use ID
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -72,16 +95,35 @@ export function ReviewCard({
       navigator.share({
         title: `${review.title} - Review by ${review.user.display_name || review.user.username}`,
         text: review.content.slice(0, 100) + "...",
-        url: `/reviews/${review.id}`,
+        url: reviewUrl,
       })
     } else {
-      navigator.clipboard.writeText(`${window.location.origin}/reviews/${review.id}`)
+      navigator.clipboard.writeText(`${window.location.origin}${reviewUrl}`)
+      toast.success("Link copied to clipboard!")
+    }
+  }
+
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    try {
+      const result = await deleteReview(review.id)
+      if (result.success) {
+        toast.success("Review deleted successfully")
+        // Refresh the page to update the UI
+        window.location.reload()
+      } else {
+        toast.error(result.error || "Failed to delete review")
+      }
+    } catch (error) {
+      toast.error("Failed to delete review")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   if (variant === "compact") {
     return (
-      <Link href={`/reviews/${review.id}`}>
+      <Link href={reviewUrl}>
         <div className="group cursor-pointer bg-card hover:bg-accent/50 rounded-xl p-4 transition-all duration-300 hover:shadow-lg border border-border/50 hover:border-border">
           <div className="flex gap-3">
             {/* Album Cover */}
@@ -176,7 +218,7 @@ export function ReviewCard({
             </div>
 
             {/* Review Title */}
-            <Link href={`/reviews/${review.id}`}>
+            <Link href={reviewUrl}>
               <h2 className="font-semibold text-base text-foreground hover:text-primary transition-colors line-clamp-2 mb-2">
                 {review.title}
               </h2>
@@ -209,11 +251,45 @@ export function ReviewCard({
                   Share review
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href={`/reviews/${review.id}`}>
+                  <Link href={reviewUrl}>
                     <ExternalLink className="h-4 w-4 mr-2" />
                     View details
                   </Link>
                 </DropdownMenuItem>
+                {isOwnReview && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DropdownMenuItem
+                          onSelect={(e) => e.preventDefault()}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete review
+                        </DropdownMenuItem>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Review</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this review? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {isDeleting ? "Deleting..." : "Delete"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -221,7 +297,7 @@ export function ReviewCard({
       </div>
 
       {/* Album Info & Cover */}
-      <Link href={`/reviews/${review.id}`} className="block">
+      <Link href={reviewUrl} className="block">
         <div className="px-4 pb-4">
           <div className="flex gap-4">
             {/* Album Cover */}
@@ -269,7 +345,7 @@ export function ReviewCard({
 
       {/* Review Content */}
       <div className="px-4 pb-4">
-        <Link href={`/reviews/${review.id}`}>
+        <Link href={reviewUrl}>
           <p className="text-sm text-foreground leading-relaxed line-clamp-3 hover:text-muted-foreground transition-colors">
             {review.content}
           </p>

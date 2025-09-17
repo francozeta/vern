@@ -112,12 +112,12 @@ export default async function ReviewsPage() {
                         song_cover_url: review.song_cover_url,
                         song_preview_url: review.song_preview_url,
                         user: {
-                          id: review.profiles.id || review.user_id,
-                          username: review.profiles.username,
-                          display_name: review.profiles.display_name,
-                          avatar_url: review.profiles.avatar_url,
-                          is_verified: review.profiles.is_verified,
-                          role: review.profiles.role,
+                          id: review.profiles?.id || review.user_id,
+                          username: review.profiles?.username,
+                          display_name: review.profiles?.display_name,
+                          avatar_url: review.profiles?.avatar_url,
+                          is_verified: review.profiles?.is_verified,
+                          role: review.profiles?.role,
                         },
                       }}
                       currentUserId={user?.id}

@@ -5,41 +5,36 @@ import { ArrowLeft, Play, ExternalLink } from "lucide-react"
 import { getLikeStatus } from "@/app/actions/likes"
 import { getCommentCount } from "@/app/actions/comments"
 import { checkFollowStatus } from "@/app/actions/follows"
+import { getReviewById } from "@/app/actions/reviews"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
 interface ReviewDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function ReviewDetailPage({ params }: ReviewDetailPageProps) {
+  const { id } = await params
+
+  console.log("[v0] Attempting to fetch review with id:", id)
+
   const supabase = await createServerSupabaseClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Get the specific review
-  const { data: review, error } = await supabase
-    .from("reviews")
-    .select(`
-      *,
-      profiles:user_id (
-        id,
-        username,
-        display_name,
-        avatar_url,
-        is_verified,
-        role
-      )
-    `)
-    .eq("id", params.id)
-    .single()
+  const reviewResult = await getReviewById(id)
 
-  if (error || !review) {
+  console.log("[v0] Review result:", reviewResult)
+
+  if (reviewResult.error || !reviewResult.review) {
+    console.log("[v0] Review not found, returning 404")
     notFound()
   }
+
+  const review = reviewResult.review
 
   // Get interaction data
   let likeCount = 0
@@ -56,7 +51,7 @@ export default async function ReviewDetailPage({ params }: ReviewDetailPageProps
 
     likeCount = likeStatus.success && likeStatus.data ? likeStatus.data.totalLikes : 0
     isLiked = likeStatus.success && likeStatus.data ? likeStatus.data.isLiked : false
-    commentCount = commentCountResult.success ? commentCountResult.count : 0
+    commentCount = commentCountResult.success ? commentCountResult.count || 0 : 0
     isFollowing = followStatus.success ? followStatus.isFollowing : false
   }
 
@@ -106,12 +101,12 @@ export default async function ReviewDetailPage({ params }: ReviewDetailPageProps
               song_cover_url: review.song_cover_url,
               song_preview_url: review.song_preview_url,
               user: {
-                id: review.profiles.id || review.user_id,
-                username: review.profiles.username,
-                display_name: review.profiles.display_name,
-                avatar_url: review.profiles.avatar_url,
-                is_verified: review.profiles.is_verified,
-                role: review.profiles.role,
+                id: review.profiles?.id || review.user_id,
+                username: review.profiles?.username || "Unknown",
+                display_name: review.profiles?.display_name || "Unknown User",
+                avatar_url: review.profiles?.avatar_url || null,
+                is_verified: review.profiles?.is_verified || false,
+                role: review.profiles?.role || "listener",
               },
             }}
             currentUserId={user?.id}
@@ -182,12 +177,12 @@ export default async function ReviewDetailPage({ params }: ReviewDetailPageProps
                     song_cover_url: relatedReview.song_cover_url,
                     song_preview_url: relatedReview.song_preview_url,
                     user: {
-                      id: relatedReview.profiles.id || relatedReview.user_id,
-                      username: relatedReview.profiles.username,
-                      display_name: relatedReview.profiles.display_name,
-                      avatar_url: relatedReview.profiles.avatar_url,
-                      is_verified: relatedReview.profiles.is_verified,
-                      role: relatedReview.profiles.role,
+                      id: relatedReview.profiles?.id || relatedReview.user_id,
+                      username: relatedReview.profiles?.username || "Unknown",
+                      display_name: relatedReview.profiles?.display_name || "Unknown User",
+                      avatar_url: relatedReview.profiles?.avatar_url || null,
+                      is_verified: relatedReview.profiles?.is_verified || false,
+                      role: relatedReview.profiles?.role || "listener",
                     },
                   }}
                   currentUserId={user?.id}

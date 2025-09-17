@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { createReviewSlug, generateUniqueSlug } from "@/lib/utils/slugs"
 
 export interface CreateReviewData {
   song_id: string
@@ -46,6 +47,15 @@ export async function createReview(data: CreateReviewData) {
     return { error: "User profile not found" }
   }
 
+  const baseSlug = createReviewSlug(data.title, data.song_artist)
+
+  const checkSlugExists = async (slug: string): Promise<boolean> => {
+    const { data } = await supabase.from("reviews").select("id").eq("slug", slug).single()
+    return !!data
+  }
+
+  const uniqueSlug = await generateUniqueSlug(baseSlug, checkSlugExists)
+
   const { data: review, error: insertError } = await supabase
     .from("reviews")
     .insert({
@@ -74,8 +84,36 @@ export async function createReview(data: CreateReviewData) {
   revalidatePath("/")
   revalidatePath("/reviews")
   revalidatePath(`/user/${user.id}`)
+  revalidatePath(`/reviews/${review.id}`)
 
   return { success: true, review }
+}
+
+export async function getReviewById(id: string) {
+  const supabase = await createServerSupabaseClient()
+
+  const { data: review, error } = await supabase
+    .from("reviews")
+    .select(`
+      *,
+      profiles:user_id (
+        id,
+        username,
+        display_name,
+        avatar_url,
+        is_verified,
+        role
+      )
+    `)
+    .eq("id", id)
+    .single()
+
+  if (error) {
+    console.error("Error fetching review by ID:", error)
+    return { error: "Review not found" }
+  }
+
+  return { review }
 }
 
 export async function getUserReviews(userId: string) {
@@ -110,10 +148,12 @@ export async function getAllReviews(limit = 20, offset = 0) {
     .select(`
       *,
       profiles:user_id (
+        id,
         username,
         display_name,
         avatar_url,
-        is_verified
+        is_verified,
+        role
       )
     `)
     .order("created_at", { ascending: false })
