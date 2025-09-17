@@ -18,8 +18,6 @@ interface ReviewDetailPageProps {
 export default async function ReviewDetailPage({ params }: ReviewDetailPageProps) {
   const { id } = await params
 
-  console.log("[v0] Attempting to fetch review with id:", id)
-
   const supabase = await createServerSupabaseClient()
   const {
     data: { user },
@@ -27,10 +25,7 @@ export default async function ReviewDetailPage({ params }: ReviewDetailPageProps
 
   const reviewResult = await getReviewById(id)
 
-  console.log("[v0] Review result:", reviewResult)
-
   if (reviewResult.error || !reviewResult.review) {
-    console.log("[v0] Review not found, returning 404")
     notFound()
   }
 
