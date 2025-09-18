@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Star, Search, X, Music, Clock, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
+import useSWR from "swr"
+import { useDebounce } from "@/hooks/use-debounce"
 import {
   searchDeezer,
   convertToSelectedSong,
@@ -27,13 +29,11 @@ interface ReviewModalProps {
 
 export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewModalProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<DeezerTrack[]>([])
   const [selectedSong, setSelectedSong] = useState<SelectedSong | null>(null)
   const [reviewTitle, setReviewTitle] = useState("")
   const [reviewContent, setReviewContent] = useState("")
   const [rating, setRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
-  const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -41,31 +41,35 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
   const maxContentLength = 500
   const isValid = selectedSong && reviewTitle.trim().length > 0 && reviewContent.trim().length > 0 && rating > 0
 
-  // Search function with debounce
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([])
-      setShowResults(false)
-      return
-    }
+  const debouncedSearchQuery = useDebounce(searchQuery, 400)
 
-    const timeoutId = setTimeout(async () => {
-      setIsSearching(true)
-      try {
-        const formattedQuery = formatSearchQuery(searchQuery)
-        const results = await searchDeezer(formattedQuery, 15)
-        setSearchResults(results.data || [])
-        setShowResults(true)
-      } catch (error) {
-        console.error("Search error:", error)
-        setSearchResults([])
-      } finally {
-        setIsSearching(false)
-      }
-    }, 400)
+  const searchFetcher = async (query: string) => {
+    if (!query.trim()) return { data: [] }
+    const formattedQuery = formatSearchQuery(query)
+    return await searchDeezer(formattedQuery, 15)
+  }
 
-    return () => clearTimeout(timeoutId)
-  }, [searchQuery])
+  const {
+    data: searchData,
+    error: searchError,
+    isLoading: isSearching,
+  } = useSWR(
+    debouncedSearchQuery.trim() ? `deezer-search:${debouncedSearchQuery}` : null,
+    () => searchFetcher(debouncedSearchQuery),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 30000, // Cache for 30 seconds
+      errorRetryCount: 2,
+    },
+  )
+
+  const searchResults = searchData?.data || []
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value)
+    setShowResults(value.trim().length > 0)
+  }, [])
 
   const handleSongSelect = (track: DeezerTrack) => {
     const song = convertToSelectedSong(track)
@@ -173,7 +177,7 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                   <Input
                     placeholder="Search for songs, artists, or albums..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-10 sm:pl-12 h-10 sm:h-12 text-sm sm:text-base bg-muted/30 border-muted-foreground/20 focus:border-primary"
                     autoFocus
                   />
@@ -190,7 +194,13 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                 <div className="space-y-2 sm:space-y-3">
                   <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">Search Results</h4>
                   <div className="space-y-1 sm:space-y-2 max-h-80 sm:max-h-96 overflow-y-auto">
-                    {searchResults.length > 0 ? (
+                    {searchError ? (
+                      <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                        <Music className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-2 sm:mb-3 opacity-40" />
+                        <p className="text-sm sm:text-base font-medium">Search failed</p>
+                        <p className="text-xs sm:text-sm">Please try again</p>
+                      </div>
+                    ) : searchResults.length > 0 ? (
                       searchResults.map((track) => (
                         <button
                           key={track.id}
@@ -222,13 +232,13 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                           </div>
                         </button>
                       ))
-                    ) : (
+                    ) : debouncedSearchQuery.trim() && !isSearching ? (
                       <div className="text-center py-8 sm:py-12 text-muted-foreground">
                         <Music className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-2 sm:mb-3 opacity-40" />
                         <p className="text-sm sm:text-base font-medium">No songs found</p>
                         <p className="text-xs sm:text-sm">Try a different search term</p>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               )}

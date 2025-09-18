@@ -4,6 +4,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const query = searchParams.get("q")
   const limit = searchParams.get("limit") || "10"
+  const type = searchParams.get("type") || "track"
 
   if (!query) {
     return NextResponse.json({ error: "Query parameter 'q' is required" }, { status: 400 })
@@ -11,7 +12,20 @@ export async function GET(request: Request) {
 
   try {
     const encodedQuery = encodeURIComponent(query.trim())
-    const deezerUrl = `https://api.deezer.com/search?q=${encodedQuery}&limit=${limit}`
+
+    let deezerUrl: string
+    switch (type) {
+      case "artist":
+        deezerUrl = `https://api.deezer.com/search/artist?q=${encodedQuery}&limit=${limit}`
+        break
+      case "album":
+        deezerUrl = `https://api.deezer.com/search/album?q=${encodedQuery}&limit=${limit}`
+        break
+      case "track":
+      default:
+        deezerUrl = `https://api.deezer.com/search?q=${encodedQuery}&limit=${limit}`
+        break
+    }
 
     const response = await fetch(deezerUrl)
 

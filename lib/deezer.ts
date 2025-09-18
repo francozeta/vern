@@ -32,6 +32,28 @@ export interface DeezerSearchResult {
   next?: string
 }
 
+export interface DeezerArtist {
+  id: number
+  name: string
+  link: string
+  picture: string
+  picture_small: string
+  picture_medium: string
+  picture_big: string
+  picture_xl: string
+  nb_album: number
+  nb_fan: number
+  radio: boolean
+  tracklist: string
+  type: "artist"
+}
+
+export interface DeezerArtistSearchResult {
+  data: DeezerArtist[]
+  total: number
+  next?: string
+}
+
 export interface SelectedSong {
   id: string
   title: string
@@ -92,4 +114,24 @@ export function formatSearchQuery(input: string): string {
     .trim()
     .replace(/[^\w\s-]/g, "") // Remove special characters except hyphens
     .replace(/\s+/g, " ") // Normalize spaces
+}
+
+// Search artists in Deezer using the Next.js API proxy
+export async function searchDeezerArtists(query: string, limit = 10): Promise<DeezerArtistSearchResult> {
+  try {
+    const url = `/api/deezer/search?q=${encodeURIComponent(query)}&type=artist&limit=${limit}`
+
+    const response = await fetch(url)
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(`Deezer Artist API proxy error: ${response.status} - ${errorData.error || "Unknown error"}`)
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error("Error searching Deezer artists via proxy:", error)
+    throw error
+  }
 }

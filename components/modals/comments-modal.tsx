@@ -1,12 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import type React from "react"
+
+import { useState, useEffect, useCallback } from "react"
+import useSWR from "swr"
+import {
+  Credenza,
+  CredenzaContent,
+  CredenzaHeader,
+  CredenzaTitle,
+  CredenzaBody,
+  CredenzaDescription,
+} from "@/components/ui/credenza"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GradientAvatar } from "@/components/user/gradient-avatar"
-import { MessageCircle, Send, Trash2, Verified } from "lucide-react"
+import { MessageCircle, Trash2, Verified, Send } from "lucide-react"
 import { createComment, getComments, deleteComment } from "@/app/actions/comments"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -35,16 +45,32 @@ interface CommentsModalProps {
   onCommentDeleted?: () => void
 }
 
+const commentsFetcher = async (reviewId: string) => {
+  const result = await getComments(reviewId)
+  if (result.success && result.comments) {
+    return result.comments
+  }
+  throw new Error(result.error || "Failed to load comments")
+}
+
 export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, onCommentDeleted }: CommentsModalProps) {
-  const [comments, setComments] = useState<Comment[]>([])
+  const {
+    data: comments = [],
+    error,
+    isLoading,
+    mutate: mutateComments,
+  } = useSWR(open ? `comments-${reviewId}` : null, () => commentsFetcher(reviewId), {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 30000, // Cache for 30 seconds
+  })
+
   const [newComment, setNewComment] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   const maxCommentLength = 500
 
-  // Get current user
   useEffect(() => {
     const getCurrentUser = async () => {
       const supabase = createBrowserSupabaseClient()
@@ -56,31 +82,17 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
     getCurrentUser()
   }, [])
 
-  // Load comments when modal opens
   useEffect(() => {
-    if (open) {
-      loadComments()
-    }
-  }, [open, reviewId])
-
-  const loadComments = async () => {
-    setIsLoading(true)
-    try {
-      const result = await getComments(reviewId)
-      if (result.success && result.comments) {
-        setComments(result.comments)
-      } else {
-        toast.error("Error loading comments")
-      }
-    } catch (error) {
-      console.error("Error loading comments:", error)
+    if (error) {
       toast.error("Error loading comments")
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [error])
 
-  const handleSubmitComment = async () => {
+  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewComment(e.target.value)
+  }, [])
+
+  const handleSubmitComment = useCallback(async () => {
     if (!newComment.trim() || isSubmitting) return
 
     setIsSubmitting(true)
@@ -88,7 +100,7 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
       const result = await createComment(reviewId, newComment)
 
       if (result.success && result.comment) {
-        setComments((prev) => [...prev, result.comment])
+        mutateComments([...comments, result.comment], false)
         setNewComment("")
         onCommentAdded?.()
         toast.success("Comment added!")
@@ -101,14 +113,17 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
     } finally {
       setIsSubmitting(false)
     }
-  }
+  }, [newComment, isSubmitting, reviewId, onCommentAdded, comments, mutateComments])
 
   const handleDeleteComment = async (commentId: string) => {
     try {
       const result = await deleteComment(commentId)
 
       if (result.success) {
-        setComments((prev) => prev.filter((comment) => comment.id !== commentId))
+        mutateComments(
+          comments.filter((comment) => comment.id !== commentId),
+          false,
+        )
         onCommentDeleted?.()
         toast.success("Comment deleted")
       } else {
@@ -133,85 +148,128 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] p-0 gap-0 bg-background border-border flex flex-col">
-        <DialogHeader className="p-4 border-b border-border">
-          <DialogTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
-            Comments ({comments.length})
-          </DialogTitle>
-        </DialogHeader>
+    <Credenza open={open} onOpenChange={onOpenChange}>
+      <CredenzaContent className="sm:max-w-[500px] w-full max-w-full max-h-[85vh] p-0 gap-0 bg-background border-border flex flex-col overflow-hidden">
+        <CredenzaHeader className="sr-only">
+          <CredenzaTitle>Comments</CredenzaTitle>
+          <CredenzaDescription>Share your thoughts about this review</CredenzaDescription>
+        </CredenzaHeader>
 
-        {/* Comments List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px] max-h-[400px]">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-            </div>
-          ) : comments.length > 0 ? (
-            comments.map((comment) => (
-              <div key={comment.id} className="flex gap-3 group">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                  {comment.profiles.avatar_url ? (
-                    <Avatar className="w-full h-full">
-                      <AvatarImage
-                        src={comment.profiles.avatar_url || "/placeholder.svg"}
-                        alt={comment.profiles.display_name || comment.profiles.username}
-                      />
-                      <AvatarFallback>
-                        <GradientAvatar userId={comment.user_id} size="sm" />
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <GradientAvatar userId={comment.user_id} size="sm" className="w-full h-full" />
-                  )}
-                </div>
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border bg-background/80 backdrop-blur-sm flex-shrink-0">
+          <div className="hidden sm:flex items-center justify-between w-full">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="text-muted-foreground hover:text-foreground text-sm"
+            >
+              Close
+            </Button>
+            <h2 className="text-lg font-semibold">Comments ({comments.length})</h2>
+            <Button
+              onClick={handleSubmitComment}
+              disabled={!newComment.trim() || isSubmitting}
+              size="sm"
+              className="px-6 font-medium"
+            >
+              {isSubmitting ? "Posting..." : "Post"}
+            </Button>
+          </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-sm">
-                      {comment.profiles.display_name || comment.profiles.username}
-                    </span>
-                    {comment.profiles.is_verified && <Verified className="h-3 w-3 text-blue-500 fill-current" />}
-                    <span className="text-xs text-muted-foreground">{formatTimeAgo(comment.created_at)}</span>
-                    {currentUserId === comment.user_id && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteComment(comment.id)}
-                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
-                      >
-                        <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-sm text-foreground leading-relaxed">{comment.content}</p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No comments yet</p>
-              <p className="text-xs">Be the first to share your thoughts!</p>
-            </div>
-          )}
+          <div className="flex sm:hidden items-center justify-center w-full">
+            <h2 className="text-lg font-semibold">Comments ({comments.length})</h2>
+          </div>
         </div>
 
-        {/* Comment Input */}
-        {currentUserId && (
-          <div className="p-4 border-t border-border">
-            <div className="space-y-3">
-              <Textarea
-                placeholder="Write a comment..."
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="min-h-[80px] resize-none text-sm"
-                maxLength={maxCommentLength}
-                disabled={isSubmitting}
-              />
-              <div className="flex items-center justify-between">
+        <CredenzaBody className="flex-1 overflow-hidden p-0">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px] max-h-[400px]">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+              </div>
+            ) : comments.length > 0 ? (
+              comments.map((comment) => (
+                <div key={comment.id} className="flex gap-3 group">
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                    {comment.profiles.avatar_url ? (
+                      <Avatar className="w-full h-full">
+                        <AvatarImage
+                          src={comment.profiles.avatar_url || "/placeholder.svg"}
+                          alt={comment.profiles.display_name || comment.profiles.username}
+                        />
+                        <AvatarFallback>
+                          <GradientAvatar userId={comment.user_id} size="sm" />
+                        </AvatarFallback>
+                      </Avatar>
+                    ) : (
+                      <GradientAvatar userId={comment.user_id} size="sm" className="w-full h-full" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-sm">
+                        {comment.profiles.display_name || comment.profiles.username}
+                      </span>
+                      {comment.profiles.is_verified && <Verified className="h-3 w-3 text-blue-500 fill-current" />}
+                      <span className="text-xs text-muted-foreground">{formatTimeAgo(comment.created_at)}</span>
+                      {currentUserId === comment.user_id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+                        >
+                          <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed">{comment.content}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No comments yet</p>
+                <p className="text-xs">Be the first to share your thoughts!</p>
+              </div>
+            )}
+          </div>
+
+          {currentUserId && (
+            <div className="p-4 border-t border-border bg-background/50">
+              <div className="flex gap-2 items-center">
+                <Input
+                  key={`comment-input-${reviewId}`}
+                  placeholder="Add a comment..."
+                  value={newComment}
+                  onChange={handleCommentChange}
+                  className="flex-1 h-10 text-sm border-muted-foreground/20 focus:border-primary bg-background"
+                  maxLength={maxCommentLength}
+                  disabled={isSubmitting}
+                  aria-label="Write a comment"
+                  aria-describedby="comment-counter"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSubmitComment()
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleSubmitComment}
+                  disabled={!newComment.trim() || isSubmitting}
+                  size="sm"
+                  className="h-10 px-3 flex-shrink-0"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex justify-start mt-2">
                 <span
+                  id="comment-counter"
                   className={cn(
                     "text-xs",
                     newComment.length > maxCommentLength * 0.8 ? "text-destructive" : "text-muted-foreground",
@@ -219,30 +277,17 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
                 >
                   {newComment.length}/{maxCommentLength}
                 </span>
-                <Button
-                  onClick={handleSubmitComment}
-                  disabled={!newComment.trim() || isSubmitting}
-                  size="sm"
-                  className="gap-2"
-                >
-                  {isSubmitting ? (
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" />
-                  ) : (
-                    <Send className="h-3 w-3" />
-                  )}
-                  {isSubmitting ? "Posting..." : "Post"}
-                </Button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {!currentUserId && (
-          <div className="p-4 border-t border-border text-center">
-            <p className="text-sm text-muted-foreground">Please log in to comment</p>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+          {!currentUserId && (
+            <div className="p-4 border-t border-border text-center bg-muted/20">
+              <p className="text-sm text-muted-foreground">Please log in to comment</p>
+            </div>
+          )}
+        </CredenzaBody>
+      </CredenzaContent>
+    </Credenza>
   )
 }
