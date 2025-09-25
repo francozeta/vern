@@ -42,9 +42,15 @@ export async function followUser(followingId: string) {
     return { error: "Failed to follow user" }
   }
 
+  // Get the target user's username for revalidation
+  const { data: targetUser } = await supabase.from("profiles").select("username").eq("id", followingId).single()
+
   // Revalidate relevant paths
   revalidatePath("/")
-  revalidatePath(`/user/[username]`, "page")
+  revalidatePath("/reviews")
+  if (targetUser?.username) {
+    revalidatePath(`/user/${targetUser.username}`)
+  }
 
   return { success: true }
 }
@@ -69,9 +75,15 @@ export async function unfollowUser(followingId: string) {
     return { error: "Failed to unfollow user" }
   }
 
+  // Get the target user's username for revalidation
+  const { data: targetUser } = await supabase.from("profiles").select("username").eq("id", followingId).single()
+
   // Revalidate relevant paths
   revalidatePath("/")
-  revalidatePath(`/user/[username]`, "page")
+  revalidatePath("/reviews")
+  if (targetUser?.username) {
+    revalidatePath(`/user/${targetUser.username}`)
+  }
 
   return { success: true }
 }
@@ -142,18 +154,9 @@ export async function getFollowers(userId: string, limit = 20, offset = 0) {
 
   const { data: followers, error } = await supabase
     .from("follows")
-    .select(`
-      follower_id,
-      created_at,
-      profiles!follows_follower_id_fkey (
-        id,
-        username,
-        display_name,
-        avatar_url,
-        is_verified,
-        role
-      )
-    `)
+    .select(
+      `follower_id, created_at, profiles!follows_follower_id_fkey (id, username, display_name, avatar_url, is_verified, role)`,
+    )
     .eq("following_id", userId)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1)
@@ -171,18 +174,9 @@ export async function getFollowing(userId: string, limit = 20, offset = 0) {
 
   const { data: following, error } = await supabase
     .from("follows")
-    .select(`
-      following_id,
-      created_at,
-      profiles!follows_following_id_fkey (
-        id,
-        username,
-        display_name,
-        avatar_url,
-        is_verified,
-        role
-      )
-    `)
+    .select(
+      `following_id, created_at, profiles!follows_following_id_fkey (id, username, display_name, avatar_url, is_verified, role)`,
+    )
     .eq("follower_id", userId)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1)

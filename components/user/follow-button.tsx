@@ -4,6 +4,7 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { followUser, unfollowUser } from "@/app/actions/follows"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface FollowButtonProps {
   targetUserId: string
@@ -11,6 +12,7 @@ interface FollowButtonProps {
   currentUserId?: string | null
   variant?: "default" | "compact"
   className?: string
+  onFollowChange?: (isFollowing: boolean) => void
 }
 
 export function FollowButton({
@@ -19,9 +21,11 @@ export function FollowButton({
   currentUserId,
   variant = "default",
   className = "",
+  onFollowChange,
 }: FollowButtonProps) {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
   const debounceRef = useRef<NodeJS.Timeout>()
+  const router = useRouter()
 
   // Don't show button if not authenticated or trying to follow self
   if (!currentUserId || currentUserId === targetUserId) {
@@ -38,6 +42,8 @@ export function FollowButton({
     const newIsFollowing = !isFollowing
     setIsFollowing(newIsFollowing)
 
+    onFollowChange?.(newIsFollowing)
+
     debounceRef.current = setTimeout(() => {
       const action = newIsFollowing ? followUser : unfollowUser
 
@@ -45,11 +51,15 @@ export function FollowButton({
         .then((result) => {
           if (result.error) {
             setIsFollowing(previousIsFollowing)
+            onFollowChange?.(previousIsFollowing)
             toast.error(result.error)
+          } else {
+            router.refresh()
           }
         })
         .catch(() => {
           setIsFollowing(previousIsFollowing)
+          onFollowChange?.(previousIsFollowing)
           toast.error("Error de conexión")
         })
     }, 150)

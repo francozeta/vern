@@ -65,12 +65,14 @@ export function FollowStats({
           <p className="text-zinc-400 text-xs truncate">@{user.username}</p>
         </div>
       </Link>
-      <FollowButton
-        targetUserId={user.id}
-        initialIsFollowing={isFollowing}
-        currentUserId={currentUserId}
-        variant="compact"
-      />
+      {currentUserId && currentUserId !== user.id && (
+        <FollowButton
+          targetUserId={user.id}
+          initialIsFollowing={isFollowing}
+          currentUserId={currentUserId}
+          variant="compact"
+        />
+      )}
     </div>
   )
 

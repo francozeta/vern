@@ -2,7 +2,6 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
-import { createReviewSlug, generateUniqueSlug } from "@/lib/utils/slugs"
 
 export interface CreateReviewData {
   song_id: string
@@ -47,15 +46,6 @@ export async function createReview(data: CreateReviewData) {
     return { error: "User profile not found" }
   }
 
-  const baseSlug = createReviewSlug(data.title, data.song_artist)
-
-  const checkSlugExists = async (slug: string): Promise<boolean> => {
-    const { data } = await supabase.from("reviews").select("id").eq("slug", slug).single()
-    return !!data
-  }
-
-  const uniqueSlug = await generateUniqueSlug(baseSlug, checkSlugExists)
-
   const { data: review, error: insertError } = await supabase
     .from("reviews")
     .insert({
@@ -94,8 +84,7 @@ export async function getReviewById(id: string) {
 
   const { data: review, error } = await supabase
     .from("reviews")
-    .select(`
-      *,
+    .select(`*,
       profiles:user_id (
         id,
         username,
@@ -121,8 +110,7 @@ export async function getUserReviews(userId: string) {
 
   const { data: reviews, error } = await supabase
     .from("reviews")
-    .select(`
-      *,
+    .select(`*,
       profiles:user_id (
         username,
         display_name,
@@ -145,8 +133,7 @@ export async function getAllReviews(limit = 20, offset = 0) {
 
   const { data: reviews, error } = await supabase
     .from("reviews")
-    .select(`
-      *,
+    .select(`*,
       profiles:user_id (
         id,
         username,
