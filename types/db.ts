@@ -56,7 +56,6 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          slug: string
           song_id: string
           song_title: string
           song_artist: string
@@ -74,7 +73,6 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
-          slug?: string
           song_id: string
           song_title: string
           song_artist: string
@@ -91,7 +89,6 @@ export interface Database {
           title?: string
           content?: string
           rating?: number
-          slug?: string
           updated_at?: string
         }
       }

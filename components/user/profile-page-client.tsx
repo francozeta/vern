@@ -12,27 +12,8 @@ import { SuggestedUsers } from "@/components/user/suggested-users"
 import { ProfileReviewCard } from "@/components/user/profile-review-card"
 import { FollowStats } from "@/components/user/follow-stats"
 import { useProfileData } from "@/hooks/use-profile-data"
-import {
-  Instagram,
-  Verified,
-  Music,
-  Star,
-  Globe,
-  Play,
-  Calendar,
-  MapPin,
-  MoreHorizontal,
-  Link,
-  Shield,
-  Flag,
-  Mic,
-  Headphones,
-  Share,
-  TrendingUp,
-  Users,
-  Grid3X3,
-  List,
-} from "lucide-react"
+import Link from "next/link"
+import { Instagram, Verified, Music, Star, Globe, Play, Calendar, MapPin, MoreHorizontal, LinkIcon, Shield, Flag, Mic, Headphones, Share, TrendingUp, Users, Grid3X3, List } from 'lucide-react'
 import { FaSpotify } from "react-icons/fa"
 import React from "react"
 
@@ -309,7 +290,7 @@ export function ProfilePageClient({
                           onClick={handleCopyProfileLink}
                           className="text-white hover:bg-zinc-800 cursor-pointer rounded-lg"
                         >
-                          <Link className="h-4 w-4 mr-2" />
+                          <LinkIcon className="h-4 w-4 mr-2" />
                           Copy profile link
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -430,7 +411,7 @@ export function ProfilePageClient({
                     {reviewViewMode === "grid" ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {reviews.map((review) => (
-                          <div key={review.id} className="group cursor-pointer">
+                          <Link key={review.id} href={`/reviews/${review.id}`} className="group cursor-pointer">
                             <div className="aspect-square bg-zinc-900 rounded-xl overflow-hidden mb-3 relative">
                               {review.song_cover_url ? (
                                 <img
@@ -468,7 +449,7 @@ export function ProfilePageClient({
                               </h3>
                               <p className="text-xs text-zinc-400 truncate">{review.song_artist}</p>
                             </div>
-                          </div>
+                          </Link>
                         ))}
                       </div>
                     ) : (

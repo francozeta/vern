@@ -21,12 +21,16 @@ export default async function UserProfilePage({ params }: { params: Promise<{ us
     notFound()
   }
 
-  const { data: reviews } = await supabase
+  const { data: reviews, error: reviewsError } = await supabase
     .from("reviews")
     .select("*")
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false })
     .limit(6)
+
+  if (reviewsError) {
+    console.error("Error fetching reviews:", reviewsError)
+  }
 
   const followStatus = currentUser ? await getFollowStatus(currentUser.id, profile.id) : { isFollowing: false }
   const followCounts = await getFollowCounts(profile.id)

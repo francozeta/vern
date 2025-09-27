@@ -70,8 +70,7 @@ export function useProfileData(
 
       setProfile(profileData)
 
-      // Fetch stats in parallel
-      const [followersResult, followingResult, reviewsResult] = await Promise.all([
+      const [followersResult, followingResult, reviewsResult, reviewsCountResult] = await Promise.all([
         supabase.from("follows").select("id", { count: "exact" }).eq("following_id", profileData.id),
         supabase.from("follows").select("id", { count: "exact" }).eq("follower_id", profileData.id),
         supabase
@@ -80,12 +79,13 @@ export function useProfileData(
           .eq("user_id", profileData.id)
           .order("created_at", { ascending: false })
           .limit(20),
+        supabase.from("reviews").select("id", { count: "exact" }).eq("user_id", profileData.id),
       ])
 
       setStats({
         followersCount: followersResult.count || 0,
         followingCount: followingResult.count || 0,
-        reviewsCount: reviewsResult.data?.length || 0,
+        reviewsCount: reviewsCountResult.count || 0,
       })
 
       setReviews(reviewsResult.data || [])

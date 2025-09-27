@@ -34,7 +34,6 @@ import { cn } from "@/lib/utils"
 interface ReviewCardProps {
   review: {
     id: string
-    slug?: string // Added slug support
     title: string
     content: string
     rating: number

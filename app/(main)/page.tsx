@@ -18,14 +18,15 @@ export default async function DashboardPage() {
     return null
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const [profileResult, reviewCountResult, followCountsResult] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase.from("reviews").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+    getFollowCounts(user.id),
+  ])
 
-  const { count: reviewCount } = await supabase
-    .from("reviews")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-
-  const followCounts = await getFollowCounts(user.id)
+  const profile = profileResult.data
+  const reviewCount = reviewCountResult.count
+  const followCounts = followCountsResult
 
   const breadcrumbs = [{ label: "Dashboard", isLink: false }]
 
