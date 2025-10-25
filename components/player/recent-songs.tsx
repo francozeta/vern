@@ -3,12 +3,25 @@
 import { usePlayer } from "@/lib/contexts/player-context"
 import { Button } from "@/components/ui/button"
 import { Play } from "lucide-react"
-import type { Database } from "@/types/db"
 
-type Song = Database["public"]["Tables"]["songs"]["Row"]
+interface Song {
+  id: string
+  title: string
+  cover_url: string | null
+  audio_url: string
+  duration_ms: number | null
+  created_at: string
+  is_published: boolean
+  source: string
+  artist_id: string | null
+}
+
+interface SongWithArtist extends Song {
+  artists?: { id: string; name: string; image_url?: string | null } | null
+}
 
 interface RecentSongsProps {
-  songs: Song[]
+  songs: SongWithArtist[]
 }
 
 export function RecentSongs({ songs }: RecentSongsProps) {
@@ -60,7 +73,7 @@ export function RecentSongs({ songs }: RecentSongsProps) {
             {/* Song Info */}
             <div className="p-3">
               <p className="text-sm font-semibold text-white truncate">{song.title}</p>
-              <p className="text-xs text-zinc-400 truncate">{song.artist || "Unknown Artist"}</p>
+              <p className="text-xs text-zinc-400 truncate">{song.artists?.name || "Unknown Artist"}</p>
             </div>
           </div>
         ))}

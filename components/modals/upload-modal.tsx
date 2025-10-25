@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,7 @@ import { Music, UploadIcon } from "lucide-react"
 import { toast } from "sonner"
 import { uploadSongAudioClient, uploadSongCoverClient } from "@/lib/supabase/upload"
 import { createSong } from "@/app/actions/songs"
+import { createClient } from "@/lib/supabase/client"
 
 interface UploadModalProps {
   open: boolean
@@ -27,14 +28,38 @@ export function UploadModal({ open, onOpenChange, userId }: UploadModalProps) {
   const [audioPreview, setAudioPreview] = useState<string | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [title, setTitle] = useState("")
-  const [artist, setArtist] = useState("")
   const [description, setDescription] = useState("")
+  const [durationMs, setDurationMs] = useState<number | null>(null)
+  const [artistId, setArtistId] = useState<string | null>(null)
+  const [displayName, setDisplayName] = useState<string>("")
+
+  useEffect(() => {
+    const fetchArtistInfo = async () => {
+      const supabase = createClient()
+      const { data: profile } = await supabase.from("profiles").select("display_name").eq("id", userId).single()
+
+      if (profile?.display_name) {
+        setDisplayName(profile.display_name)
+        setArtistId(userId)
+      }
+    }
+
+    if (open) {
+      fetchArtistInfo()
+    }
+  }, [open, userId])
 
   const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setAudioFile(file)
       setAudioPreview(file.name)
+
+      const audio = new Audio()
+      audio.onloadedmetadata = () => {
+        setDurationMs(Math.round(audio.duration * 1000))
+      }
+      audio.src = URL.createObjectURL(file)
     }
   }
 
@@ -53,8 +78,16 @@ export function UploadModal({ open, onOpenChange, userId }: UploadModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!audioFile || !title || !artist) {
-      toast.error("Please provide title, artist, and audio file")
+    if (!audioFile || !title) {
+      toast.error("Please provide title and audio file")
+      return
+    }
+
+    const supabase = createClient()
+    const { data: artist } = await supabase.from("artists").select("id").eq("id", userId).single()
+
+    if (!artist) {
+      toast.error("Please switch to artist mode in your profile before uploading songs")
       return
     }
 
@@ -83,10 +116,11 @@ export function UploadModal({ open, onOpenChange, userId }: UploadModalProps) {
       // Create song record
       const result = await createSong({
         title,
-        artist,
+        artist: displayName,
         description,
         audioUrl: audioUrl!,
         coverUrl,
+        durationMs: durationMs || undefined,
       })
 
       if (result.error) {
@@ -100,8 +134,8 @@ export function UploadModal({ open, onOpenChange, userId }: UploadModalProps) {
         setAudioPreview(null)
         setCoverPreview(null)
         setTitle("")
-        setArtist("")
         setDescription("")
+        setDurationMs(null)
       }
     } catch (error) {
       console.error("Upload error:", error)
@@ -144,6 +178,12 @@ export function UploadModal({ open, onOpenChange, userId }: UploadModalProps) {
                 </span>
               </label>
             </div>
+            {durationMs && (
+              <p className="text-xs text-muted-foreground">
+                Duration: {Math.floor(durationMs / 1000 / 60)}:
+                {String(Math.floor((durationMs / 1000) % 60)).padStart(2, "0")}
+              </p>
+            )}
           </div>
 
           {/* Cover Image */}
@@ -187,16 +227,14 @@ export function UploadModal({ open, onOpenChange, userId }: UploadModalProps) {
             />
           </div>
 
-          {/* Artist */}
           <div className="space-y-2">
-            <Label htmlFor="artist">Artist Name *</Label>
-            <Input
-              id="artist"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
-              placeholder="Enter artist name"
-              disabled={isLoading}
-            />
+            <Label>Uploading as</Label>
+            <div className="p-3 rounded-md bg-blue-500/10 border border-blue-500/30 text-sm">
+              <p className="font-medium text-blue-100">{displayName || "Loading..."}</p>
+              <p className="text-xs text-blue-200/70 mt-1">
+                Your music will be published under this name. Update your display name in settings to change it.
+              </p>
+            </div>
           </div>
 
           {/* Description */}

@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { songUploadSchema, type SongUploadInput } from "@/lib/validations/songs"
 import { revalidatePath } from "next/cache"
 
-export async function createSong(data: SongUploadInput & { audioUrl: string; coverUrl?: string }) {
+export async function createSong(data: SongUploadInput & { audioUrl: string; coverUrl?: string; durationMs?: number }) {
   try {
     const supabase = await createServerSupabaseClient()
 
@@ -19,20 +19,52 @@ export async function createSong(data: SongUploadInput & { audioUrl: string; cov
     // Validate input
     const validatedData = songUploadSchema.parse(data)
 
+    let { data: artist } = await supabase.from("artists").select("id").eq("id", user.id).single()
+
+    if (!artist) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, username")
+        .eq("id", user.id)
+        .single()
+
+      const { data: newArtist } = await supabase
+        .from("artists")
+        .insert({
+          id: user.id,
+          name: profile?.display_name || profile?.username || "Unknown Artist",
+          bio: null,
+          image_url: null,
+          genres: [],
+          popularity: 0,
+          followers_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single()
+
+      artist = newArtist
+    }
+
     // Create song record
     const { data: song, error } = await supabase
       .from("songs")
       .insert({
         title: validatedData.title,
-        artist_id: null, // Will be linked to artist later if needed
+        artist_id: artist?.id || null,
         uploader_id: user.id,
         audio_url: data.audioUrl,
         cover_url: data.coverUrl || null,
         description: validatedData.description || null,
         genre_id: null,
-        duration_ms: null,
+        duration_ms: data.durationMs || null,
         is_published: true,
         source: "native",
+        play_count: 0,
+        review_count: 0,
+        like_count: 0,
+        average_rating: null,
       })
       .select()
       .single()
@@ -192,7 +224,22 @@ export async function getRecentSongs(limit = 10) {
 
     const { data: songs, error } = await supabase
       .from("songs")
-      .select("*")
+      .select(`
+        id,
+        title,
+        cover_url,
+        audio_url,
+        duration_ms,
+        created_at,
+        is_published,
+        source,
+        artist_id,
+        artists!songs_artist_id_fkey (
+          id,
+          name,
+          image_url
+        )
+      `)
       .eq("is_published", true)
       .eq("source", "native")
       .order("created_at", { ascending: false })

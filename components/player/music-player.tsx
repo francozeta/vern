@@ -16,11 +16,11 @@ export function MusicPlayer() {
   const { currentSong, isPlaying, currentTime, duration, volume, togglePlay, setCurrentTime, setVolume } = usePlayer()
 
   return (
-    <div className="bg-gradient-to-r from-zinc-900 via-zinc-950 to-black border-t border-zinc-800/50 z-40">
+    <div className="bg-sidebar/80 backdrop-blur-md border-t border-border/40">
       <div className="max-w-7xl mx-auto px-4 py-4">
         {/* Progress Bar */}
         <div className="mb-4 flex items-center gap-2">
-          <span className="text-xs text-zinc-400 w-10 text-right">{formatTime(currentTime)}</span>
+          <span className="text-xs text-white/60 w-10 text-right">{formatTime(currentTime)}</span>
           <Slider
             value={[currentTime]}
             max={duration || 100}
@@ -33,7 +33,7 @@ export function MusicPlayer() {
             className="flex-1"
             disabled={!currentSong}
           />
-          <span className="text-xs text-zinc-400 w-10">{formatTime(duration)}</span>
+          <span className="text-xs text-white/60 w-10">{formatTime(duration)}</span>
         </div>
 
         {/* Main Player */}
@@ -47,13 +47,13 @@ export function MusicPlayer() {
                 className="h-14 w-14 rounded-lg object-cover flex-shrink-0 shadow-lg"
               />
             ) : (
-              <div className="h-14 w-14 rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900 flex-shrink-0 flex items-center justify-center shadow-lg">
-                <span className="text-xs text-zinc-500">No song</span>
+              <div className="h-14 w-14 rounded-lg bg-white/5 flex-shrink-0 flex items-center justify-center shadow-lg border border-white/10">
+                <span className="text-xs text-white/40">No song</span>
               </div>
             )}
             <div className="min-w-0">
               <p className="text-sm font-semibold text-white truncate">{currentSong?.title || "No song playing"}</p>
-              <p className="text-xs text-zinc-400 truncate">{currentSong?.artist || "Select a song to start"}</p>
+              <p className="text-xs text-white/60 truncate">{currentSong?.artists?.name || "Select a song to start"}</p>
             </div>
           </div>
 
@@ -63,7 +63,7 @@ export function MusicPlayer() {
               size="sm"
               variant="ghost"
               disabled={!currentSong}
-              className="h-9 w-9 p-0 hover:bg-white/10 disabled:opacity-40 transition-colors"
+              className="h-9 w-9 p-0 hover:bg-white/10 transition-all duration-200 border border-white/20 hover:border-white/30 disabled:opacity-40 rounded-full"
             >
               <SkipBack className="h-4 w-4" />
             </Button>
@@ -72,7 +72,7 @@ export function MusicPlayer() {
               variant="ghost"
               onClick={togglePlay}
               disabled={!currentSong}
-              className="h-9 w-9 p-0 hover:bg-white/10 disabled:opacity-40 transition-colors"
+              className="h-9 w-9 p-0 hover:bg-white/10 transition-all duration-200 border border-white/20 hover:border-white/30 disabled:opacity-40 rounded-full"
             >
               {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
@@ -80,7 +80,7 @@ export function MusicPlayer() {
               size="sm"
               variant="ghost"
               disabled={!currentSong}
-              className="h-9 w-9 p-0 hover:bg-white/10 disabled:opacity-40 transition-colors"
+              className="h-9 w-9 p-0 hover:bg-white/10 transition-all duration-200 border border-white/20 hover:border-white/30 disabled:opacity-40 rounded-full"
             >
               <SkipForward className="h-4 w-4" />
             </Button>
@@ -89,9 +89,9 @@ export function MusicPlayer() {
           {/* Volume */}
           <div className="flex items-center gap-2 w-32">
             {volume === 0 ? (
-              <VolumeX className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+              <VolumeX className="h-4 w-4 text-white/60 flex-shrink-0" />
             ) : (
-              <Volume2 className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+              <Volume2 className="h-4 w-4 text-white/60 flex-shrink-0" />
             )}
             <Slider
               value={[volume]}

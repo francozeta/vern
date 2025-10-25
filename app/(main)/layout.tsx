@@ -42,7 +42,7 @@ export default function RootLayout({
         <PlayerProvider>
           <SidebarProvider>
             <AppSidebar />
-            <SidebarInset className="flex flex-col">
+            <SidebarInset className="flex flex-col h-screen">
               <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-border/40 bg-sidebar/80 backdrop-blur-md">
                 <div className="flex items-center gap-2 px-4">
                   <SidebarTrigger className="-ml-1" />
@@ -54,7 +54,9 @@ export default function RootLayout({
                 </div>
               </header>
               <main className="flex-1 overflow-y-auto">{children}</main>
-              <MusicPlayer />
+              <div className="sticky bottom-0 z-40 border-t border-border/40 bg-sidebar/80 backdrop-blur-md">
+                <MusicPlayer />
+              </div>
               <Toaster />
             </SidebarInset>
             <BottomNavigation />

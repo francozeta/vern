@@ -6,7 +6,11 @@ import { createContext, useContext, useRef, useState, useCallback, useEffect } f
 export interface Song {
   id: string
   title: string
-  artist: string
+  artists?: {
+    id: string
+    name: string
+    image_url?: string | null
+  }
   audio_url: string
   cover_url?: string
   duration_ms?: number

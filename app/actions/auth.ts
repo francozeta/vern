@@ -222,6 +222,10 @@ export async function updateProfileWithAvatar(formData: FormData) {
     throw new Error("Failed to update profile. Please try again.")
   }
 
+  if (role === "artist" || role === "both") {
+    await createOrUpdateArtist(user.id, username)
+  }
+
   redirect("/")
 }
 
@@ -287,5 +291,50 @@ export async function updateUserProfile(formData: FormData) {
     throw new Error("Failed to update profile. Please try again.")
   }
 
+  if (role && (role === "artist" || role === "both")) {
+    await createOrUpdateArtist(user.id, display_name || username || "Unknown Artist")
+  }
+
   return { success: true, message: "Profile updated successfully!" }
+}
+
+export async function createOrUpdateArtist(userId: string, displayName: string) {
+  const supabase = await createServerSupabaseClient()
+
+  try {
+    // Check if artist already exists
+    const { data: existingArtist } = await supabase.from("artists").select("id").eq("id", userId).single()
+
+    if (existingArtist) {
+      // Artist already exists, no need to create
+      return { success: true, artistId: userId }
+    }
+
+    // Create new artist record
+    const { data: artist, error } = await supabase
+      .from("artists")
+      .insert({
+        id: userId,
+        name: displayName || "Unknown Artist",
+        bio: null,
+        image_url: null,
+        genres: [],
+        popularity: 0,
+        followers_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error("Error creating artist:", error)
+      return { error: "Failed to create artist profile" }
+    }
+
+    return { success: true, artistId: artist.id }
+  } catch (error) {
+    console.error("Error in createOrUpdateArtist:", error)
+    return { error: "Failed to create artist profile" }
+  }
 }

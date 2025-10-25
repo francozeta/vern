@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { profileSettingsSchema, accountSettingsSchema } from "@/lib/validations/settings"
+import { createOrUpdateArtist } from "@/app/actions/auth"
 
 export async function updateProfileSettings(formData: FormData) {
   const supabase = await createServerSupabaseClient()
@@ -59,6 +60,18 @@ export async function updateProfileSettings(formData: FormData) {
   if (error) {
     console.error("Profile update error:", error)
     throw new Error("Failed to update profile. Please try again.")
+  }
+
+  if (role === "artist" || role === "both") {
+    await createOrUpdateArtist(user.id, display_name || username)
+  }
+
+  if (display_name) {
+    const { data: artist } = await supabase.from("artists").select("id").eq("id", user.id).single()
+
+    if (artist) {
+      await supabase.from("artists").update({ name: display_name }).eq("id", user.id)
+    }
   }
 
   return { success: true, message: "Profile updated successfully!" }
