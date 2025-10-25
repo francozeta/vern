@@ -5,7 +5,8 @@ import { ProfileTab } from "@/components/settings/profile-tab"
 import { AccountTab } from "@/components/settings/account-tab"
 import { GeneralTab } from "@/components/settings/general-tab"
 import { BillingTab } from "@/components/settings/billing-tab"
-import { User, Link, Settings, CreditCard } from "lucide-react"
+import { ArtistTab } from "@/components/settings/artist-tab"
+import { User, Link, Settings, CreditCard, Music } from "lucide-react"
 
 export default async function SettingsPage() {
   const supabase = await createServerSupabaseClient()
@@ -24,13 +25,18 @@ export default async function SettingsPage() {
     notFound()
   }
 
+  const isArtist = profile.role === "artist" || profile.role === "both"
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-1">
       <div className="mx-auto w-full max-w-6xl">
         <div className="flex flex-col gap-6">
           {/* Tabs */}
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted">
+            <TabsList
+              className="grid w-full h-auto p-1 bg-muted"
+              style={{ gridTemplateColumns: isArtist ? "repeat(6, 1fr)" : "repeat(4, 1fr)" }}
+            >
               <TabsTrigger value="profile" className="flex items-center gap-2 py-3 px-2 text-xs sm:text-sm">
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">Profile</span>
@@ -47,6 +53,12 @@ export default async function SettingsPage() {
                 <CreditCard className="h-4 w-4" />
                 <span className="hidden sm:inline">Billing</span>
               </TabsTrigger>
+              {isArtist && (
+                <TabsTrigger value="artist" className="flex items-center gap-2 py-3 px-2 text-xs sm:text-sm col-span-2">
+                  <Music className="h-4 w-4" />
+                  <span className="hidden sm:inline">My Songs</span>
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <div className="mt-6">
@@ -65,6 +77,12 @@ export default async function SettingsPage() {
               <TabsContent value="billing" className="space-y-6">
                 <BillingTab />
               </TabsContent>
+
+              {isArtist && (
+                <TabsContent value="artist" className="space-y-6">
+                  <ArtistTab userId={user.id} />
+                </TabsContent>
+              )}
             </div>
           </Tabs>
         </div>

@@ -5,7 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Music, Star, Users, TrendingUp, Play } from "lucide-react"
 import { ActivityFeed } from "@/components/feed/activity-feed"
 import { SuggestedUsers } from "@/components/user/suggested-users"
+import { RecentSongs } from "@/components/player/recent-songs"
 import { getFollowCounts } from "@/app/actions/follows"
+import { getRecentSongs } from "@/app/actions/songs"
 import Link from "next/link"
 
 export default async function DashboardPage() {
@@ -18,15 +20,17 @@ export default async function DashboardPage() {
     return null
   }
 
-  const [profileResult, reviewCountResult, followCountsResult] = await Promise.all([
+  const [profileResult, reviewCountResult, followCountsResult, recentSongsResult] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase.from("reviews").select("*", { count: "exact", head: true }).eq("user_id", user.id),
     getFollowCounts(user.id),
+    getRecentSongs(8),
   ])
 
   const profile = profileResult.data
   const reviewCount = reviewCountResult.count
   const followCounts = followCountsResult
+  const recentSongs = recentSongsResult.data || []
 
   const breadcrumbs = [{ label: "Dashboard", isLink: false }]
 
@@ -89,6 +93,12 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {recentSongs.length > 0 && (
+          <div className="mb-8">
+            <RecentSongs songs={recentSongs} />
+          </div>
+        )}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 md:gap-8">

@@ -5,12 +5,14 @@ import { Upload, Feather, Search } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useState, useEffect } from "react"
 import { ReviewModal } from "@/components/modals/review-modal"
+import { UploadModal } from "@/components/modals/upload-modal"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 export function HeaderAuthClient() {
   const isMobile = useIsMobile()
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [showUploadModal, setShowUploadModal] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
@@ -26,11 +28,12 @@ export function HeaderAuthClient() {
         data: { user },
       } = await supabase.auth.getUser()
       if (user) {
-        const { data: profile } = await supabase.from("profiles").select("avatar_url").eq("id", user.id).single()
+        const { data: profile } = await supabase.from("profiles").select("avatar_url, role").eq("id", user.id).single()
 
         setUser({
           id: user.id,
           avatar_url: profile?.avatar_url,
+          role: profile?.role,
         })
       }
     }
@@ -56,7 +59,11 @@ export function HeaderAuthClient() {
   }
 
   const handleUploadClick = () => {
-    console.log("Upload clicked")
+    if (user?.role === "listener") {
+      alert("Only artists can upload songs. Please change your role in settings.")
+      return
+    }
+    setShowUploadModal(true)
   }
 
   const handleSearchClick = () => {
@@ -96,12 +103,15 @@ export function HeaderAuthClient() {
       </div>
 
       {user && (
-        <ReviewModal
-          open={showReviewModal}
-          onOpenChange={setShowReviewModal}
-          userId={user.id}
-          userAvatar={user.avatar_url}
-        />
+        <>
+          <ReviewModal
+            open={showReviewModal}
+            onOpenChange={setShowReviewModal}
+            userId={user.id}
+            userAvatar={user.avatar_url}
+          />
+          <UploadModal open={showUploadModal} onOpenChange={setShowUploadModal} userId={user.id} />
+        </>
       )}
     </>
   )
