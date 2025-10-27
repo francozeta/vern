@@ -1,4 +1,6 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+"use client"
+
+import { createBrowserSupabaseClient } from "@/lib/supabase/client"
 import { ReviewCard } from "@/components/feed/review-card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,38 +11,107 @@ import { getAllReviews } from "@/app/actions/reviews"
 import { getLikeStatus } from "@/app/actions/likes"
 import { getCommentCount } from "@/app/actions/comments"
 import { checkFollowStatus } from "@/app/actions/follows"
+import { useEffect, useState, useCallback, useRef } from "react"
+import type { User } from "@supabase/supabase-js"
 
-export default async function ReviewsPage() {
-  const supabase = await createServerSupabaseClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+interface Review {
+  id: string
+  title: string
+  content: string
+  rating: number
+  created_at: string
+  song_title: string
+  song_artist: string
+  song_album: string
+  song_cover_url: string
+  song_preview_url: string
+  profiles?: {
+    id: string
+    username?: string
+    display_name?: string
+    avatar_url?: string
+    is_verified?: boolean
+    role?: "listener" | "artist" | "both"
+  }
+  user_id: string
+  likeCount?: number
+  isLiked?: boolean
+  commentCount?: number
+  isFollowing?: boolean
+}
 
-  // Get all reviews
-  const reviewsResult = await getAllReviews(20, 0)
-  const reviews = reviewsResult.reviews || []
+export default function ReviewsPage() {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const loadingRef = useRef(false)
 
-  // Enhance reviews with interaction data
-  const enhancedReviews = await Promise.all(
-    reviews.map(async (review) => {
-      if (user) {
-        const [likeStatus, commentCount, followStatus] = await Promise.all([
-          getLikeStatus(review.id, user.id),
-          getCommentCount(review.id),
-          checkFollowStatus(user.id, review.user_id),
-        ])
+  const loadReviews = useCallback(async () => {
+    if (loadingRef.current) {
+      console.log("[v0] Reviews already loading, skipping")
+      return
+    }
 
-        return {
-          ...review,
-          likeCount: likeStatus.success && likeStatus.data ? likeStatus.data.totalLikes : 0,
-          isLiked: likeStatus.success && likeStatus.data ? likeStatus.data.isLiked : false,
-          commentCount: commentCount.success ? commentCount.count : 0,
-          isFollowing: followStatus.success ? followStatus.isFollowing : false,
-        }
-      }
-      return review
-    }),
-  )
+    loadingRef.current = true
+    console.log("[v0] Starting to load reviews...")
+
+    try {
+      const supabase = createBrowserSupabaseClient()
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser()
+      console.log("[v0] Current user:", currentUser?.id)
+      setUser(currentUser)
+
+      const reviewsResult = await getAllReviews(20, 0)
+      const reviewsList = reviewsResult.reviews || []
+      console.log("[v0] Fetched reviews count:", reviewsList.length)
+
+      const enhancedReviews = await Promise.all(
+        reviewsList.map(async (review) => {
+          if (currentUser) {
+            const [likeStatus, commentCount, followStatus] = await Promise.all([
+              getLikeStatus(review.id, currentUser.id),
+              getCommentCount(review.id),
+              checkFollowStatus(currentUser.id, review.user_id),
+            ])
+
+            return {
+              ...review,
+              likeCount: likeStatus.success && likeStatus.data ? likeStatus.data.totalLikes : 0,
+              isLiked: likeStatus.success && likeStatus.data ? likeStatus.data.isLiked : false,
+              commentCount: commentCount.success ? commentCount.count : 0,
+              isFollowing: followStatus.success ? followStatus.isFollowing : false,
+            }
+          }
+          return review
+        }),
+      )
+
+      console.log("[v0] Enhanced reviews count:", enhancedReviews.length)
+      setReviews(enhancedReviews)
+    } catch (error) {
+      console.error("[v0] Failed to load reviews:", error)
+    } finally {
+      setLoading(false)
+      loadingRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    loadReviews()
+  }, [loadReviews])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Music className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Loading reviews...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,8 +167,8 @@ export default async function ReviewsPage() {
 
             <TabsContent value="all" className="mt-6">
               <div className="space-y-6">
-                {enhancedReviews.length > 0 ? (
-                  enhancedReviews.map((review) => (
+                {reviews.length > 0 ? (
+                  reviews.map((review) => (
                     <ReviewCard
                       key={review.id}
                       review={{
@@ -113,11 +184,11 @@ export default async function ReviewsPage() {
                         song_preview_url: review.song_preview_url,
                         user: {
                           id: review.profiles?.id || review.user_id,
-                          username: review.profiles?.username,
+                          username: review.profiles?.username || "Unknown",
                           display_name: review.profiles?.display_name,
                           avatar_url: review.profiles?.avatar_url,
                           is_verified: review.profiles?.is_verified,
-                          role: review.profiles?.role,
+                          role: review.profiles?.role || "listener",
                         },
                       }}
                       currentUserId={user?.id}
@@ -141,7 +212,6 @@ export default async function ReviewsPage() {
               </div>
             </TabsContent>
 
-            {/* Other tab contents would be similar with different filtering */}
             <TabsContent value="trending" className="mt-6">
               <div className="text-center py-16">
                 <TrendingUp className="h-16 w-16 text-muted-foreground mx-auto mb-4" />

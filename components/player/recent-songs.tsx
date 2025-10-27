@@ -1,31 +1,21 @@
 "use client"
 
-import { usePlayer } from "@/lib/contexts/player-context"
+import { usePlayerStore } from "@/lib/store/player-store"
 import { Button } from "@/components/ui/button"
 import { Play } from "lucide-react"
-
-interface Song {
-  id: string
-  title: string
-  cover_url: string | null
-  audio_url: string
-  duration_ms: number | null
-  created_at: string
-  is_published: boolean
-  source: string
-  artist_id: string | null
-}
-
-interface SongWithArtist extends Song {
-  artists?: { id: string; name: string; image_url?: string | null } | null
-}
+import type { Song } from "@/types/player"
 
 interface RecentSongsProps {
-  songs: SongWithArtist[]
+  songs: Song[]
 }
 
 export function RecentSongs({ songs }: RecentSongsProps) {
-  const { playSong } = usePlayer()
+  const { addToQueue, play } = usePlayerStore()
+
+  const handlePlaySong = (song: Song) => {
+    addToQueue(song)
+    play()
+  }
 
   if (!songs || songs.length === 0) {
     return (
@@ -63,7 +53,7 @@ export function RecentSongs({ songs }: RecentSongsProps) {
                 <Button
                   size="lg"
                   className="h-12 w-12 rounded-full bg-white text-black hover:bg-white/90 p-0"
-                  onClick={() => playSong(song)}
+                  onClick={() => handlePlaySong(song)}
                 >
                   <Play className="h-5 w-5 fill-current" />
                 </Button>

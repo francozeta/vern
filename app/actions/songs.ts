@@ -84,6 +84,102 @@ export async function createSong(data: SongUploadInput & { audioUrl: string; cov
   }
 }
 
+export async function createSongWithArtists(
+  data: SongUploadInput & { audioUrl: string; coverUrl?: string; durationMs?: number; collaboratorIds?: string[] },
+) {
+  try {
+    const supabase = await createServerSupabaseClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { error: "User not authenticated" }
+    }
+
+    const validatedData = songUploadSchema.parse(data)
+
+    let { data: artist } = await supabase.from("artists").select("id").eq("id", user.id).single()
+
+    if (!artist) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, username")
+        .eq("id", user.id)
+        .single()
+
+      const { data: newArtist } = await supabase
+        .from("artists")
+        .insert({
+          id: user.id,
+          name: profile?.display_name || profile?.username || "Unknown Artist",
+          bio: null,
+          image_url: null,
+          genres: [],
+          popularity: 0,
+          followers_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single()
+
+      artist = newArtist
+    }
+
+    const { data: song, error } = await supabase
+      .from("songs")
+      .insert({
+        title: validatedData.title,
+        artist_id: artist?.id || null,
+        uploader_id: user.id,
+        audio_url: data.audioUrl,
+        cover_url: data.coverUrl || null,
+        description: validatedData.description || null,
+        genre_id: null,
+        duration_ms: data.durationMs || null,
+        is_published: true,
+        source: "native",
+        play_count: 0,
+        review_count: 0,
+        like_count: 0,
+        average_rating: null,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error("Error creating song:", error)
+      return { error: "Failed to create song" }
+    }
+
+    const artistsToRegister = [
+      { song_id: song.id, artist_id: artist?.id, role: "primary" },
+      ...(data.collaboratorIds?.map((id) => ({
+        song_id: song.id,
+        artist_id: id,
+        role: "featured",
+      })) || []),
+    ]
+
+    const { error: artistError } = await supabase.from("song_artists").insert(artistsToRegister)
+
+    if (artistError) {
+      console.error("Error registering artists:", artistError)
+      return { error: "Failed to register artists" }
+    }
+
+    revalidatePath("/settings")
+    revalidatePath("/artist/[id]")
+
+    return { data: song }
+  } catch (error) {
+    console.error("Error in createSongWithArtists:", error)
+    return { error: "Failed to create song" }
+  }
+}
+
 export async function getUserSongs() {
   try {
     const supabase = await createServerSupabaseClient()
@@ -234,7 +330,7 @@ export async function getRecentSongs(limit = 10) {
         is_published,
         source,
         artist_id,
-        artists!songs_artist_id_fkey (
+        artists:artist_id (
           id,
           name,
           image_url
@@ -250,7 +346,7 @@ export async function getRecentSongs(limit = 10) {
       return { error: "Failed to fetch songs" }
     }
 
-    return { data: songs }
+    return { data: songs || [] }
   } catch (error) {
     console.error("Error in getRecentSongs:", error)
     return { error: "Failed to fetch songs" }
