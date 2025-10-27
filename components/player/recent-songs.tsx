@@ -10,9 +10,10 @@ interface RecentSongsProps {
 }
 
 export function RecentSongs({ songs }: RecentSongsProps) {
-  const { addToQueue, play } = usePlayerStore()
+  const { addToQueue, setCurrentSong, play } = usePlayerStore()
 
   const handlePlaySong = (song: Song) => {
+    setCurrentSong(song)  
     addToQueue(song)
     play()
   }

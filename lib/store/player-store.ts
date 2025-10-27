@@ -32,13 +32,12 @@ export const usePlayerStore = create<PlayerStore>()(
         }))
       },
 
-      pause: () => {
-        set({ isPlaying: false })
-      },
-
       play: () => {
+        const { currentSong } = get()
+        if (!currentSong) return
         set({ isPlaying: true })
       },
+      pause: () => set({ isPlaying: false }),
 
       setCurrentTime: (time: number) => {
         set({ currentTime: time })
@@ -49,12 +48,15 @@ export const usePlayerStore = create<PlayerStore>()(
       },
 
       // Queue controls
-      addToQueue: (song: Song) => {
-        set((state) => ({
-          queue: [...state.queue, song],
-        }))
-      },
-
+      addToQueue: (song: Song) =>
+        set((state) => {
+          const alreadyInQueue = state.queue.find((s) => s.id === song.id)
+          const newQueue = alreadyInQueue ? state.queue : [...state.queue, song]
+          return {
+            queue: newQueue,
+            currentSong: state.currentSong || song, // 👈 importante
+          }
+        }),
       removeFromQueue: (index: number) => {
         set((state) => ({
           queue: state.queue.filter((_, i) => i !== index),
