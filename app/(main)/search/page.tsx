@@ -10,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
-import useSWR from "swr"
 import { useDebounce } from "@/hooks/use-debounce"
 import { searchDeezer, searchDeezerArtists, type DeezerTrack, type DeezerArtist } from "@/lib/deezer"
+import { useSearchUsers, useSearchDeezer } from "@/hooks/use-search"
 
 const MUSIC_CATEGORIES = [
   {
@@ -194,17 +194,9 @@ export default function SearchPage() {
 
   const debouncedQuery = useDebounce(query, 300)
 
-  const { data: users = [], isLoading: isLoadingUsers } = useSWR(
-    debouncedQuery ? `users-${debouncedQuery}` : null,
-    () => fetchUsers(debouncedQuery),
-    { revalidateOnFocus: false, dedupingInterval: 30000 },
-  )
-
-  const { data: deezerContent = { songs: [], artists: [] }, isLoading: isLoadingDeezer } = useSWR(
-    debouncedQuery ? `deezer-${debouncedQuery}` : null,
-    () => fetchDeezerContent(debouncedQuery),
-    { revalidateOnFocus: false, dedupingInterval: 30000 },
-  )
+  const { data: users = [], isLoading: isLoadingUsers } = useSearchUsers(debouncedQuery)
+  const { data: deezerContent = { songs: [], artists: [] }, isLoading: isLoadingDeezer } =
+    useSearchDeezer(debouncedQuery)
 
   const isSearching = isLoadingUsers || isLoadingDeezer
 

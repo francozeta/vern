@@ -4,6 +4,7 @@ import { Geist } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { PlayerProvider } from "@/components/providers/player-provider"
+import { QueryProvider } from "@/components/providers/query-provider"
 
 export const metadata: Metadata = {
   title: "VERN - Music Platform",
@@ -25,7 +26,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.className} antialiased dark`}>
-        <PlayerProvider>{children}</PlayerProvider>
+        <QueryProvider>
+          <PlayerProvider>{children}</PlayerProvider>
+        </QueryProvider>
         <Analytics />
       </body>
     </html>

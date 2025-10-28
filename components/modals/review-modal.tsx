@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Star, Search, X, Music, Clock, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
-import useSWR from "swr"
 import { useDebounce } from "@/hooks/use-debounce"
 import {
   searchDeezer,
@@ -19,6 +18,7 @@ import {
 } from "@/lib/deezer"
 import { createReview, type CreateReviewData } from "@/app/actions/reviews"
 import { toast } from "sonner"
+import { useQuery } from "@tanstack/react-query"
 
 interface ReviewModalProps {
   open: boolean
@@ -43,26 +43,16 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
 
   const debouncedSearchQuery = useDebounce(searchQuery, 400)
 
-  const searchFetcher = async (query: string) => {
-    if (!query.trim()) return { data: [] }
-    const formattedQuery = formatSearchQuery(query)
-    return await searchDeezer(formattedQuery, 15)
-  }
-
-  const {
-    data: searchData,
-    error: searchError,
-    isLoading: isSearching,
-  } = useSWR(
-    debouncedSearchQuery.trim() ? `deezer-search:${debouncedSearchQuery}` : null,
-    () => searchFetcher(debouncedSearchQuery),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 30000, // Cache for 30 seconds
-      errorRetryCount: 2,
+  const { data: searchData, isLoading: isSearching } = useQuery({
+    queryKey: ["deezer-search", debouncedSearchQuery],
+    queryFn: async () => {
+      if (!debouncedSearchQuery.trim()) return { data: [] }
+      const formattedQuery = formatSearchQuery(debouncedSearchQuery)
+      return await searchDeezer(formattedQuery, 15)
     },
-  )
+    enabled: debouncedSearchQuery.trim().length > 0,
+    staleTime: 1000 * 60 * 5,
+  })
 
   const searchResults = searchData?.data || []
 
@@ -194,13 +184,7 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                 <div className="space-y-2 sm:space-y-3">
                   <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">Search Results</h4>
                   <div className="space-y-1 sm:space-y-2 max-h-80 sm:max-h-96 overflow-y-auto">
-                    {searchError ? (
-                      <div className="text-center py-8 sm:py-12 text-muted-foreground">
-                        <Music className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-2 sm:mb-3 opacity-40" />
-                        <p className="text-sm sm:text-base font-medium">Search failed</p>
-                        <p className="text-xs sm:text-sm">Please try again</p>
-                      </div>
-                    ) : searchResults.length > 0 ? (
+                    {searchResults.length > 0 ? (
                       searchResults.map((track) => (
                         <button
                           key={track.id}

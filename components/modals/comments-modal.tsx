@@ -3,7 +3,6 @@
 import type React from "react"
 
 import { useState, useEffect, useCallback } from "react"
-import useSWR from "swr"
 import {
   Credenza,
   CredenzaContent,
@@ -17,25 +16,12 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GradientAvatar } from "@/components/user/gradient-avatar"
 import { MessageCircle, Trash2, Verified, Send } from "lucide-react"
-import { createComment, getComments, deleteComment } from "@/app/actions/comments"
+import { createComment, deleteComment } from "@/app/actions/comments"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { createBrowserSupabaseClient } from "@/lib/supabase/client"
-
-interface Comment {
-  id: string
-  user_id: string
-  review_id: string
-  content: string
-  created_at: string
-  updated_at: string
-  profiles: {
-    username: string
-    display_name: string | null
-    avatar_url: string | null
-    is_verified: boolean
-  }
-}
+import { useComments } from "@/hooks/use-comments"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 interface CommentsModalProps {
   open: boolean
@@ -45,31 +31,15 @@ interface CommentsModalProps {
   onCommentDeleted?: () => void
 }
 
-const commentsFetcher = async (reviewId: string) => {
-  const result = await getComments(reviewId)
-  if (result.success && result.comments) {
-    return result.comments
-  }
-  throw new Error(result.error || "Failed to load comments")
-}
-
 export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, onCommentDeleted }: CommentsModalProps) {
-  const {
-    data: comments = [],
-    error,
-    isLoading,
-    mutate: mutateComments,
-  } = useSWR(open ? `comments-${reviewId}` : null, () => commentsFetcher(reviewId), {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    dedupingInterval: 30000, // Cache for 30 seconds
-  })
+  const { data: comments = [], isLoading, error } = useComments(reviewId, open)
 
   const [newComment, setNewComment] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   const maxCommentLength = 500
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -88,51 +58,88 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
     }
   }, [error])
 
-  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewComment(e.target.value)
-  }, [])
+  const createCommentMutation = useMutation({
+    mutationFn: (content: string) => createComment(reviewId, content),
+    onMutate: async (content) => {
+      await queryClient.cancelQueries({ queryKey: ["comments", reviewId] })
+      const previousComments = queryClient.getQueryData(["comments", reviewId])
 
-  const handleSubmitComment = useCallback(async () => {
-    if (!newComment.trim() || isSubmitting) return
+      queryClient.setQueryData(["comments", reviewId], (old: any) => [
+        ...old,
+        {
+          id: `temp-${Date.now()}`,
+          content,
+          created_at: new Date().toISOString(),
+          user_id: currentUserId,
+          profiles: {
+            username: "You",
+            display_name: null,
+            avatar_url: null,
+            is_verified: false,
+          },
+        },
+      ])
 
-    setIsSubmitting(true)
-    try {
-      const result = await createComment(reviewId, newComment)
-
-      if (result.success && result.comment) {
-        mutateComments([...comments, result.comment], false)
+      return { previousComments }
+    },
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["comments", reviewId] })
         setNewComment("")
         onCommentAdded?.()
         toast.success("Comment added!")
       } else {
         toast.error(result.error || "Failed to add comment")
       }
-    } catch (error) {
-      console.error("Error submitting comment:", error)
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousComments) {
+        queryClient.setQueryData(["comments", reviewId], context.previousComments)
+      }
       toast.error("Error adding comment")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }, [newComment, isSubmitting, reviewId, onCommentAdded, comments, mutateComments])
+    },
+  })
 
-  const handleDeleteComment = async (commentId: string) => {
-    try {
-      const result = await deleteComment(commentId)
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => deleteComment(commentId),
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({ queryKey: ["comments", reviewId] })
+      const previousComments = queryClient.getQueryData(["comments", reviewId])
 
+      queryClient.setQueryData(["comments", reviewId], (old: any) =>
+        old.filter((comment: any) => comment.id !== commentId),
+      )
+
+      return { previousComments }
+    },
+    onSuccess: (result) => {
       if (result.success) {
-        mutateComments(
-          comments.filter((comment) => comment.id !== commentId),
-          false,
-        )
+        queryClient.invalidateQueries({ queryKey: ["comments", reviewId] })
         onCommentDeleted?.()
         toast.success("Comment deleted")
       } else {
         toast.error(result.error || "Failed to delete comment")
       }
-    } catch (error) {
-      console.error("Error deleting comment:", error)
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousComments) {
+        queryClient.setQueryData(["comments", reviewId], context.previousComments)
+      }
       toast.error("Error deleting comment")
-    }
+    },
+  })
+
+  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewComment(e.target.value)
+  }, [])
+
+  const handleSubmitComment = useCallback(async () => {
+    if (!newComment.trim() || createCommentMutation.isPending) return
+    createCommentMutation.mutate(newComment)
+  }, [newComment, createCommentMutation])
+
+  const handleDeleteComment = async (commentId: string) => {
+    deleteCommentMutation.mutate(commentId)
   }
 
   const formatTimeAgo = (dateString: string) => {
@@ -168,11 +175,11 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
             <h2 className="text-lg font-semibold">Comments ({comments.length})</h2>
             <Button
               onClick={handleSubmitComment}
-              disabled={!newComment.trim() || isSubmitting}
+              disabled={!newComment.trim() || createCommentMutation.isPending}
               size="sm"
               className="px-6 font-medium"
             >
-              {isSubmitting ? "Posting..." : "Post"}
+              {createCommentMutation.isPending ? "Posting..." : "Post"}
             </Button>
           </div>
 
@@ -219,6 +226,7 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
                           size="sm"
                           onClick={() => handleDeleteComment(comment.id)}
                           className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+                          disabled={deleteCommentMutation.isPending}
                         >
                           <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                         </Button>
@@ -247,7 +255,7 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
                   onChange={handleCommentChange}
                   className="flex-1 h-10 text-sm border-muted-foreground/20 focus:border-primary bg-background"
                   maxLength={maxCommentLength}
-                  disabled={isSubmitting}
+                  disabled={createCommentMutation.isPending}
                   aria-label="Write a comment"
                   aria-describedby="comment-counter"
                   onKeyDown={(e) => {
@@ -259,7 +267,7 @@ export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, on
                 />
                 <Button
                   onClick={handleSubmitComment}
-                  disabled={!newComment.trim() || isSubmitting}
+                  disabled={!newComment.trim() || createCommentMutation.isPending}
                   size="sm"
                   className="h-10 px-3 flex-shrink-0"
                 >
