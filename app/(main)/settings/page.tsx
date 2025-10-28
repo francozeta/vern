@@ -1,29 +1,67 @@
-import { notFound, redirect } from "next/navigation"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+"use client"
+
+import { useEffect, useState } from "react"
+import { createBrowserSupabaseClient } from "@/lib/supabase/client"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProfileTab } from "@/components/settings/profile-tab"
 import { AccountTab } from "@/components/settings/account-tab"
 import { GeneralTab } from "@/components/settings/general-tab"
 import { BillingTab } from "@/components/settings/billing-tab"
 import { ArtistTab } from "@/components/settings/artist-tab"
+import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 import { User, Link, Settings, CreditCard, Music } from "lucide-react"
+import { useRouter } from "next/navigation"
 
-export default async function SettingsPage() {
-  const supabase = await createServerSupabaseClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+interface Profile {
+  id: string
+  username: string
+  display_name: string | null
+  avatar_url: string | null
+  bio: string | null
+  banner_url: string | null
+  role: "listener" | "artist" | "both"
+  is_verified: boolean
+  onboarding_completed: boolean
+  location: string | null
+  website_url: string | null
+  spotify_url: string | null
+  instagram_url: string | null
+}
 
-  if (!user) {
-    redirect("/login")
-  }
+export default function SettingsPage() {
+  const router = useRouter()
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const { data: profile, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  useEffect(() => {
+    const loadSettings = async () => {
+      const supabase = createBrowserSupabaseClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-  if (error || !profile) {
-    console.error("Error fetching profile:", error)
-    notFound()
-  }
+      if (!user) {
+        router.push("/login")
+        return
+      }
+
+      const { data: profileData, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+
+      if (error || !profileData) {
+        router.push("/")
+        return
+      }
+
+      setProfile(profileData as Profile)
+      setIsLoading(false)
+    }
+
+    loadSettings()
+  }, [router])
+
+  if (isLoading) return <SettingsSkeleton />
+
+  if (!profile) return null
 
   const isArtist = profile.role === "artist" || profile.role === "both"
 
@@ -31,7 +69,6 @@ export default async function SettingsPage() {
     <div className="flex flex-1 flex-col gap-4 p-4 pt-1">
       <div className="mx-auto w-full max-w-6xl">
         <div className="flex flex-col gap-6">
-          {/* Tabs */}
           <Tabs defaultValue="profile" className="w-full">
             <TabsList
               className="grid w-full h-auto p-1 bg-muted"
@@ -80,7 +117,7 @@ export default async function SettingsPage() {
 
               {isArtist && (
                 <TabsContent value="artist" className="space-y-6">
-                  <ArtistTab userId={user.id} />
+                  <ArtistTab userId={profile.id} />
                 </TabsContent>
               )}
             </div>

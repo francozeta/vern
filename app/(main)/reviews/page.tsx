@@ -10,6 +10,7 @@ import { Music, Search, Filter, Star, TrendingUp, Clock } from "lucide-react"
 import { useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
 import useSWR from "swr"
+import { ReviewListSkeleton } from "@/components/skeletons/review-skeleton"
 
 interface Review {
   id: string
@@ -61,30 +62,39 @@ const fetchReviews = async (userId: string | null) => {
 
   if (!userId) return reviews || []
 
-  const enhancedReviews = await Promise.all(
-    (reviews || []).map(async (review) => {
-      const [likesData, commentsData, followData] = await Promise.all([
-        supabase.from("likes").select("id", { count: "exact" }).eq("review_id", review.id),
-        supabase.from("review_comments").select("id", { count: "exact" }).eq("review_id", review.id),
-        supabase.from("follows").select("id").eq("follower_id", userId).eq("following_id", review.user_id).single(),
-      ])
+  const reviewIds = (reviews || []).map((r) => r.id)
 
-      const userLike = await supabase
-        .from("likes")
-        .select("id")
-        .eq("review_id", review.id)
-        .eq("user_id", userId)
-        .single()
+  const results = await Promise.allSettled([
+    supabase.from("likes").select("review_id, user_id").in("review_id", reviewIds),
+    supabase.from("review_comments").select("review_id").in("review_id", reviewIds),
+    supabase.from("likes").select("review_id").in("review_id", reviewIds).eq("user_id", userId),
+    supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", userId)
+      .in(
+        "following_id",
+        (reviews || []).map((r) => r.user_id),
+      ),
+  ])
 
-      return {
-        ...review,
-        likeCount: likesData.count || 0,
-        isLiked: !!userLike.data,
-        commentCount: commentsData.count || 0,
-        isFollowing: !!followData.data,
-      }
-    }),
-  )
+  const allLikes = results[0].status === "fulfilled" ? results[0].value.data : []
+  const allComments = results[1].status === "fulfilled" ? results[1].value.data : []
+  const userLikes = results[2].status === "fulfilled" ? results[2].value.data : []
+  const followingData = results[3].status === "fulfilled" ? results[3].value.data : []
+
+  const likesByReview = Object.groupBy(allLikes || [], (l: any) => l.review_id)
+  const commentsByReview = Object.groupBy(allComments || [], (c: any) => c.review_id)
+  const userLikeSet = new Set((userLikes || []).map((l: any) => l.review_id))
+  const followingSet = new Set((followingData || []).map((f: any) => f.following_id))
+
+  const enhancedReviews = (reviews || []).map((review) => ({
+    ...review,
+    likeCount: (likesByReview[review.id] || []).length,
+    isLiked: userLikeSet.has(review.id),
+    commentCount: (commentsByReview[review.id] || []).length,
+    isFollowing: followingSet.has(review.user_id),
+  }))
 
   return enhancedReviews
 }
@@ -116,7 +126,7 @@ export default function ReviewsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-12 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Music Reviews</h1>
           <p className="text-muted-foreground">Discover what the community is saying about the latest music</p>
@@ -171,10 +181,7 @@ export default function ReviewsPage() {
 
             <TabsContent value="all" className="mt-6">
               {isLoading ? (
-                <div className="text-center py-16">
-                  <Music className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
-                  <p className="text-muted-foreground">Loading reviews...</p>
-                </div>
+                <ReviewListSkeleton />
               ) : (
                 <div className="space-y-6">
                   {reviews.length > 0 ? (
