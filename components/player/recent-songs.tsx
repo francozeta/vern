@@ -2,7 +2,7 @@
 
 import { usePlayerStore } from "@/lib/store/player-store"
 import { Button } from "@/components/ui/button"
-import { Play } from "lucide-react"
+import { Play, ListMusic } from "lucide-react"
 import type { Song } from "@/types/player"
 
 interface RecentSongsProps {
@@ -10,12 +10,16 @@ interface RecentSongsProps {
 }
 
 export function RecentSongs({ songs }: RecentSongsProps) {
-  const { addToQueue, setCurrentSong, play } = usePlayerStore()
+  const { playSong, setQueue } = usePlayerStore()
 
   const handlePlaySong = (song: Song) => {
-    setCurrentSong(song)  
-    addToQueue(song)
-    play()
+    playSong(song, true)
+  }
+
+  const handlePlayAll = () => {
+    if (songs.length > 0) {
+      setQueue(songs, 0)
+    }
   }
 
   if (!songs || songs.length === 0) {
@@ -28,7 +32,18 @@ export function RecentSongs({ songs }: RecentSongsProps) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-white">Recently Uploaded</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-white">Recently Uploaded</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePlayAll}
+          className="gap-2 bg-white/5 border-white/10 hover:bg-white/10"
+        >
+          <ListMusic className="h-4 w-4" />
+          Play All
+        </Button>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {songs.map((song) => (
           <div

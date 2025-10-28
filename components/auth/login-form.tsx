@@ -14,6 +14,7 @@ import { signInSchema, type SignInInput } from "@/lib/validations/auth"
 import { SiVercel } from "react-icons/si"
 import { FaGoogle, FaSpotify } from "react-icons/fa"
 import { AlertCircle } from "lucide-react"
+import Link from "next/link"
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -50,18 +51,18 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2">
-            <a href="#" className="flex flex-col items-center gap-2 font-medium">
+            <Link href="/" className="flex flex-col items-center gap-2 font-medium">
               <div className="flex size-8 items-center justify-center rounded-md">
                 <SiVercel className="size-6" />
               </div>
               <span className="sr-only">VERN</span>
-            </a>
+            </Link>
             <h1 className="text-xl font-bold">Welcome to VERN</h1>
             <div className="text-center text-sm">
               Don&apos;t have an account?{" "}
-              <a href="/signup" className="underline underline-offset-4">
+              <Link href="/signup" className="underline underline-offset-4">
                 Sign up
-              </a>
+              </Link>
             </div>
           </div>
           <div className="flex flex-col gap-6">
@@ -126,13 +127,13 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       </form>
       <div className="text-muted-foreground text-center text-xs text-balance">
         By clicking continue, you agree to our{" "}
-        <a href="#" className="underline underline-offset-4 hover:text-primary">
+        <Link href="#" className="underline underline-offset-4 hover:text-primary">
           Terms of Service
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a href="#" className="underline underline-offset-4 hover:text-primary">
+        <Link href="#" className="underline underline-offset-4 hover:text-primary">
           Privacy Policy
-        </a>
+        </Link>
         .
       </div>
     </div>

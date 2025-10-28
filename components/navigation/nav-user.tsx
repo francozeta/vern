@@ -15,6 +15,7 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import { GradientAvatar } from "@/components/user/gradient-avatar"
 import { signOut } from "@/app/actions/auth"
+import Link from "next/link"
 
 export function NavUser({
   user,
@@ -89,16 +90,16 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <a href={user.username ? `/user/${user.username}` : "#"}>
+                <Link href={user.username ? `/user/${user.username}` : "#"}>
                   <User />
                   Profile
-                </a>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <a href="/settings">
+                <Link href="/settings">
                   <BadgeCheck />
                   Settings
-                </a>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />

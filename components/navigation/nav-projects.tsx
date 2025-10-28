@@ -1,6 +1,7 @@
 "use client"
 
 import { Folder, Forward, MoreHorizontal, Trash2, Frame, PieChart } from "lucide-react"
+import Link from "next/link"
 
 import {
   DropdownMenu,
@@ -46,10 +47,10 @@ export function NavProjects({
           return (
             <SidebarMenuItem key={item.name}>
               <SidebarMenuButton asChild>
-                <a href={item.url}>
+                <Link href={item.url}>
                   {IconComponent && <IconComponent />}
                   <span>{item.name}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

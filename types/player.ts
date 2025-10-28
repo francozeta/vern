@@ -25,11 +25,12 @@ export interface PlaybackState {
   queueIndex: number
   repeatMode: "off" | "one" | "all"
   isShuffle: boolean
+  shuffleHistory: number[]
 }
 
 export interface PlayerStore extends PlaybackState {
   // Playback controls
-  playSong: (song: Song) => void
+  playSong: (song: Song, addToQueue?: boolean) => void
   togglePlay: () => void
   pause: () => void
   play: () => void
@@ -42,7 +43,7 @@ export interface PlayerStore extends PlaybackState {
   clearQueue: () => void
   nextTrack: () => void
   previousTrack: () => void
-  setQueue: (songs: Song[]) => void
+  setQueue: (songs: Song[], startIndex?: number) => void
 
   // Playback modes
   setRepeatMode: (mode: "off" | "one" | "all") => void

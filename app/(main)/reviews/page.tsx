@@ -7,12 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Music, Search, Filter, Star, TrendingUp, Clock } from "lucide-react"
-import { getAllReviews } from "@/app/actions/reviews"
-import { getLikeStatus } from "@/app/actions/likes"
-import { getCommentCount } from "@/app/actions/comments"
-import { checkFollowStatus } from "@/app/actions/follows"
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState } from "react"
 import type { User } from "@supabase/supabase-js"
+import useSWR from "swr"
 
 interface Review {
   id: string
@@ -40,96 +37,103 @@ interface Review {
   isFollowing?: boolean
 }
 
+const fetchReviews = async (userId: string | null) => {
+  const supabase = createBrowserSupabaseClient()
+
+  const { data: reviews, error } = await supabase
+    .from("reviews")
+    .select(
+      `*,
+      profiles:user_id (
+        id,
+        username,
+        display_name,
+        avatar_url,
+        is_verified,
+        role
+      )
+    `,
+    )
+    .order("created_at", { ascending: false })
+    .limit(20)
+
+  if (error) throw error
+
+  if (!userId) return reviews || []
+
+  const enhancedReviews = await Promise.all(
+    (reviews || []).map(async (review) => {
+      const [likesData, commentsData, followData] = await Promise.all([
+        supabase.from("likes").select("id", { count: "exact" }).eq("review_id", review.id),
+        supabase.from("review_comments").select("id", { count: "exact" }).eq("review_id", review.id),
+        supabase.from("follows").select("id").eq("follower_id", userId).eq("following_id", review.user_id).single(),
+      ])
+
+      const userLike = await supabase
+        .from("likes")
+        .select("id")
+        .eq("review_id", review.id)
+        .eq("user_id", userId)
+        .single()
+
+      return {
+        ...review,
+        likeCount: likesData.count || 0,
+        isLiked: !!userLike.data,
+        commentCount: commentsData.count || 0,
+        isFollowing: !!followData.data,
+      }
+    }),
+  )
+
+  return enhancedReviews
+}
+
 export default function ReviewsPage() {
-  const [reviews, setReviews] = useState<Review[]>([])
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const loadingRef = useRef(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState("recent")
 
-  const loadReviews = useCallback(async () => {
-    if (loadingRef.current) {
-      console.log("[v0] Reviews already loading, skipping")
-      return
-    }
-
-    loadingRef.current = true
-    console.log("[v0] Starting to load reviews...")
-
-    try {
+  useEffect(() => {
+    const getUser = async () => {
       const supabase = createBrowserSupabaseClient()
       const {
         data: { user: currentUser },
       } = await supabase.auth.getUser()
-      console.log("[v0] Current user:", currentUser?.id)
       setUser(currentUser)
-
-      const reviewsResult = await getAllReviews(20, 0)
-      const reviewsList = reviewsResult.reviews || []
-      console.log("[v0] Fetched reviews count:", reviewsList.length)
-
-      const enhancedReviews = await Promise.all(
-        reviewsList.map(async (review) => {
-          if (currentUser) {
-            const [likeStatus, commentCount, followStatus] = await Promise.all([
-              getLikeStatus(review.id, currentUser.id),
-              getCommentCount(review.id),
-              checkFollowStatus(currentUser.id, review.user_id),
-            ])
-
-            return {
-              ...review,
-              likeCount: likeStatus.success && likeStatus.data ? likeStatus.data.totalLikes : 0,
-              isLiked: likeStatus.success && likeStatus.data ? likeStatus.data.isLiked : false,
-              commentCount: commentCount.success ? commentCount.count : 0,
-              isFollowing: followStatus.success ? followStatus.isFollowing : false,
-            }
-          }
-          return review
-        }),
-      )
-
-      console.log("[v0] Enhanced reviews count:", enhancedReviews.length)
-      setReviews(enhancedReviews)
-    } catch (error) {
-      console.error("[v0] Failed to load reviews:", error)
-    } finally {
-      setLoading(false)
-      loadingRef.current = false
     }
+    getUser()
   }, [])
 
-  useEffect(() => {
-    loadReviews()
-  }, [loadReviews])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Music className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
-          <p className="text-muted-foreground">Loading reviews...</p>
-        </div>
-      </div>
-    )
-  }
+  const { data: reviews = [], isLoading } = useSWR(
+    user ? `reviews-${user.id}` : "reviews-guest",
+    () => fetchReviews(user?.id || null),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
+    },
+  )
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Music Reviews</h1>
           <p className="text-muted-foreground">Discover what the community is saying about the latest music</p>
         </div>
 
-        {/* Filters */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search reviews, songs, or artists..." className="pl-10 bg-card border-border" />
+              <Input
+                placeholder="Search reviews, songs, or artists..."
+                className="pl-10 bg-card border-border"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <Select defaultValue="recent">
+            <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-full sm:w-48 bg-card border-border">
                 <SelectValue />
               </SelectTrigger>
@@ -166,50 +170,57 @@ export default function ReviewsPage() {
             </TabsList>
 
             <TabsContent value="all" className="mt-6">
-              <div className="space-y-6">
-                {reviews.length > 0 ? (
-                  reviews.map((review) => (
-                    <ReviewCard
-                      key={review.id}
-                      review={{
-                        id: review.id,
-                        title: review.title,
-                        content: review.content,
-                        rating: review.rating,
-                        created_at: review.created_at,
-                        song_title: review.song_title,
-                        song_artist: review.song_artist,
-                        song_album: review.song_album,
-                        song_cover_url: review.song_cover_url,
-                        song_preview_url: review.song_preview_url,
-                        user: {
-                          id: review.profiles?.id || review.user_id,
-                          username: review.profiles?.username || "Unknown",
-                          display_name: review.profiles?.display_name,
-                          avatar_url: review.profiles?.avatar_url,
-                          is_verified: review.profiles?.is_verified,
-                          role: review.profiles?.role || "listener",
-                        },
-                      }}
-                      currentUserId={user?.id}
-                      likeCount={review.likeCount}
-                      isLiked={review.isLiked}
-                      commentCount={review.commentCount}
-                      isFollowing={review.isFollowing}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center py-16">
-                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Music className="h-8 w-8 text-muted-foreground" />
+              {isLoading ? (
+                <div className="text-center py-16">
+                  <Music className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+                  <p className="text-muted-foreground">Loading reviews...</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {reviews.length > 0 ? (
+                    reviews.map((review) => (
+                      <ReviewCard
+                        key={review.id}
+                        review={{
+                          id: review.id,
+                          title: review.title,
+                          content: review.content,
+                          rating: review.rating,
+                          created_at: review.created_at,
+                          song_title: review.song_title,
+                          song_artist: review.song_artist,
+                          song_album: review.song_album,
+                          song_cover_url: review.song_cover_url,
+                          song_preview_url: review.song_preview_url,
+                          user: {
+                            id: review.profiles?.id || review.user_id,
+                            username: review.profiles?.username || "Unknown",
+                            display_name: review.profiles?.display_name,
+                            avatar_url: review.profiles?.avatar_url,
+                            is_verified: review.profiles?.is_verified,
+                            role: review.profiles?.role || "listener",
+                          },
+                        }}
+                        currentUserId={user?.id}
+                        likeCount={review.likeCount}
+                        isLiked={review.isLiked}
+                        commentCount={review.commentCount}
+                        isFollowing={review.isFollowing}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-16">
+                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Music className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">No reviews yet</h3>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                        Be the first to share your thoughts about music with the community
+                      </p>
                     </div>
-                    <h3 className="text-xl font-semibold text-foreground mb-2">No reviews yet</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto">
-                      Be the first to share your thoughts about music with the community
-                    </p>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="trending" className="mt-6">

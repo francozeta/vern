@@ -14,6 +14,7 @@ import { signUpSchema, type SignUpInput } from "@/lib/validations/auth"
 import { SiVercel } from "react-icons/si"
 import { FaGoogle, FaSpotify } from "react-icons/fa"
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
+import Link from "next/link"
 
 export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
   const [showPassword, setShowPassword] = useState(false)
@@ -58,9 +59,9 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
             <h1 className="text-xl font-bold">Create your account</h1>
             <div className="text-center text-sm">
               Already have an account?{" "}
-              <a href="/login" className="underline underline-offset-4 hover:text-primary">
+              <Link href="/login" className="underline underline-offset-4 hover:text-primary">
                 Sign in
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -172,13 +173,13 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"div">)
 
       <div className="text-center text-xs text-balance text-muted-foreground">
         By creating an account, you agree to our{" "}
-        <a href="#" className="underline underline-offset-4 hover:text-primary">
+        <Link href="#" className="underline underline-offset-4 hover:text-primary">
           Terms of Service
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a href="#" className="underline underline-offset-4 hover:text-primary">
+        <Link href="#" className="underline underline-offset-4 hover:text-primary">
           Privacy Policy
-        </a>
+        </Link>
         .
       </div>
     </div>

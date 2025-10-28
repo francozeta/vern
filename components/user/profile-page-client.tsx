@@ -13,7 +13,27 @@ import { ProfileReviewCard } from "@/components/user/profile-review-card"
 import { FollowStats } from "@/components/user/follow-stats"
 import { useProfileData } from "@/hooks/use-profile-data"
 import Link from "next/link"
-import { Instagram, Verified, Music, Star, Globe, Play, Calendar, MapPin, MoreHorizontal, LinkIcon, Shield, Flag, Mic, Headphones, Share, TrendingUp, Users, Grid3X3, List } from 'lucide-react'
+import {
+  Instagram,
+  Verified,
+  Music,
+  Star,
+  Globe,
+  Play,
+  Calendar,
+  MapPin,
+  MoreHorizontal,
+  LinkIcon,
+  Shield,
+  Flag,
+  Mic,
+  Headphones,
+  Share,
+  TrendingUp,
+  Users,
+  Grid3X3,
+  List,
+} from "lucide-react"
 import { FaSpotify } from "react-icons/fa"
 import React from "react"
 
@@ -245,7 +265,7 @@ export function ProfilePageClient({
                       asChild
                       className="bg-white text-black hover:bg-zinc-200 font-medium px-6 py-2 rounded-full transition-all"
                     >
-                      <a href="/settings">Edit Profile</a>
+                      <Link href="/settings">Edit Profile</Link>
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

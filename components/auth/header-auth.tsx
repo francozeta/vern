@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { HeaderAuthClient } from "@/components/auth/header-auth-client"
+import Link from "next/link"
 
 export async function HeaderAuth() {
   const supabase = await createServerSupabaseClient()
@@ -12,10 +13,10 @@ export async function HeaderAuth() {
     return (
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <a href="/login">Sign In</a>
+          <Link href="/login">Sign In</Link>
         </Button>
         <Button size="sm" asChild>
-          <a href="/signup">Sign Up</a>
+          <Link href="/signup">Sign Up</Link>
         </Button>
       </div>
     )
