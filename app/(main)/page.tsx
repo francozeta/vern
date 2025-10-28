@@ -1,4 +1,8 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+"use client"
+
+import { useEffect, useState } from "react"
+import { createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { useHomeData } from "@/hooks/use-home-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -6,33 +10,26 @@ import { Music, Star, Users, TrendingUp, Play } from "lucide-react"
 import { ActivityFeed } from "@/components/feed/activity-feed"
 import { SuggestedUsers } from "@/components/user/suggested-users"
 import { RecentSongs } from "@/components/player/recent-songs"
-import { getFollowCounts } from "@/app/actions/follows"
-import { getRecentSongs } from "@/app/actions/songs"
+import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 import Link from "next/link"
 
-export default async function DashboardPage() {
-  const supabase = await createServerSupabaseClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+export default function HomePage() {
+  const supabase = createBrowserSupabaseClient()
+  const [user, setUser] = useState<any>(null)
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
 
-  if (!user) {
-    return null
-  }
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+      setIsLoadingAuth(false)
+    })
+  }, [supabase])
 
-  const [profileResult, reviewCountResult, followCountsResult, recentSongsResult] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
-    supabase.from("reviews").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-    getFollowCounts(user.id),
-    getRecentSongs(8),
-  ])
+  const { data: homeData, isLoading } = useHomeData(user?.id || null)
 
-  const profile = profileResult.data
-  const reviewCount = reviewCountResult.count
-  const followCounts = followCountsResult
-  const recentSongs = recentSongsResult.data || []
+  if (isLoadingAuth || isLoading) return <SettingsSkeleton />
 
-  const breadcrumbs = [{ label: "Dashboard", isLink: false }]
+  if (!user || !homeData) return null
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -40,7 +37,7 @@ export default async function DashboardPage() {
         {/* Welcome Section */}
         <div className="space-y-2 mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-white">
-            Welcome back, {profile?.display_name || profile?.username || "Music Lover"}
+            Welcome back, {homeData.profile?.display_name || homeData.profile?.username || "Music Lover"}
           </h1>
           <p className="text-zinc-400">
             Discover new music, share your thoughts, and connect with fellow music enthusiasts.
@@ -55,7 +52,7 @@ export default async function DashboardPage() {
               <Star className="h-4 w-4 text-zinc-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{reviewCount || 0}</div>
+              <div className="text-2xl font-bold text-white">{homeData.reviewCount || 0}</div>
               <p className="text-xs text-zinc-500">Total reviews written</p>
             </CardContent>
           </Card>
@@ -66,7 +63,7 @@ export default async function DashboardPage() {
               <Users className="h-4 w-4 text-zinc-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{followCounts.followingCount}</div>
+              <div className="text-2xl font-bold text-white">{homeData.followingCount}</div>
               <p className="text-xs text-zinc-500">Artists & reviewers</p>
             </CardContent>
           </Card>
@@ -77,7 +74,7 @@ export default async function DashboardPage() {
               <TrendingUp className="h-4 w-4 text-zinc-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{followCounts.followersCount}</div>
+              <div className="text-2xl font-bold text-white">{homeData.followersCount}</div>
               <p className="text-xs text-zinc-500">People following you</p>
             </CardContent>
           </Card>
@@ -94,9 +91,9 @@ export default async function DashboardPage() {
           </Card>
         </div>
 
-        {recentSongs.length > 0 && (
+        {homeData.recentSongs.length > 0 && (
           <div className="mb-8">
-            <RecentSongs songs={recentSongs} />
+            <RecentSongs songs={homeData.recentSongs} />
           </div>
         )}
 
@@ -104,28 +101,28 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 md:gap-8">
           {/* Activity Feed */}
           <div className="min-w-0">
-            <Tabs defaultValue="following" className="w-full">
+            <Tabs defaultValue="for-you" className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-zinc-900/50 border border-zinc-800/50 rounded-lg mb-6">
+                <TabsTrigger
+                  value="for-you"
+                  className="data-[state=active]:bg-white data-[state=active]:text-black text-zinc-400"
+                >
+                  For You
+                </TabsTrigger>
                 <TabsTrigger
                   value="following"
                   className="data-[state=active]:bg-white data-[state=active]:text-black text-zinc-400"
                 >
                   Following
                 </TabsTrigger>
-                <TabsTrigger
-                  value="discover"
-                  className="data-[state=active]:bg-white data-[state=active]:text-black text-zinc-400"
-                >
-                  Discover
-                </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="for-you" className="mt-0">
+                <ActivityFeed currentUserId={user.id} showFollowingOnly={false} />
+              </TabsContent>
 
               <TabsContent value="following" className="mt-0">
                 <ActivityFeed currentUserId={user.id} showFollowingOnly={true} />
-              </TabsContent>
-
-              <TabsContent value="discover" className="mt-0">
-                <ActivityFeed currentUserId={user.id} showFollowingOnly={false} />
               </TabsContent>
             </Tabs>
           </div>
@@ -169,3 +166,4 @@ export default async function DashboardPage() {
     </div>
   )
 }
+  

@@ -71,7 +71,7 @@ export function ActivityFeed({ currentUserId, showFollowingOnly = false }: Activ
 
   useEffect(() => {
     loadActivities()
-  }, []) // Empty dependency array - load once on mount
+  }, [loadActivities])
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true)

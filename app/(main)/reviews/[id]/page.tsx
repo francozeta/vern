@@ -1,72 +1,48 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+"use client"
+
+import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
+import { createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { useReviewDetail } from "@/hooks/use-review-detail"
 import { ReviewCard } from "@/components/feed/review-card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Play, ExternalLink } from "lucide-react"
-import { getLikeStatus } from "@/app/actions/likes"
-import { getCommentCount } from "@/app/actions/comments"
-import { checkFollowStatus } from "@/app/actions/follows"
-import { getReviewById } from "@/app/actions/reviews"
+import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 import Link from "next/link"
-import { notFound } from "next/navigation"
 
-interface ReviewDetailPageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+export default function ReviewDetailPage() {
+  const params = useParams()
+  const supabase = createBrowserSupabaseClient()
+  const [user, setUser] = useState<any>(null)
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
 
-export default async function ReviewDetailPage({ params }: ReviewDetailPageProps) {
-  const { id } = await params
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+      setIsLoadingAuth(false)
+    })
+  }, [supabase])
 
-  const supabase = await createServerSupabaseClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data, isLoading, error } = useReviewDetail(params.id as string, user?.id || null)
 
-  const reviewResult = await getReviewById(id)
+  if (isLoadingAuth || isLoading) return <SettingsSkeleton />
 
-  if (reviewResult.error || !reviewResult.review) {
-    notFound()
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Review not found</h1>
+          <Button asChild>
+            <Link href="/reviews">Back to Reviews</Link>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
-  const review = reviewResult.review
+  if (!data) return null
 
-  // Get interaction data
-  let likeCount = 0
-  let isLiked = false
-  let commentCount = 0
-  let isFollowing = false
-
-  if (user) {
-    const [likeStatus, commentCountResult, followStatus] = await Promise.all([
-      getLikeStatus(review.id, user.id),
-      getCommentCount(review.id),
-      checkFollowStatus(user.id, review.user_id),
-    ])
-
-    likeCount = likeStatus.success && likeStatus.data ? likeStatus.data.totalLikes : 0
-    isLiked = likeStatus.success && likeStatus.data ? likeStatus.data.isLiked : false
-    commentCount = commentCountResult.success ? commentCountResult.count || 0 : 0
-    isFollowing = followStatus.success ? followStatus.isFollowing : false
-  }
-
-  // Get related reviews from the same artist
-  const { data: relatedReviews } = await supabase
-    .from("reviews")
-    .select(`
-      *,
-      profiles:user_id (
-        id,
-        username,
-        display_name,
-        avatar_url,
-        is_verified,
-        role
-      )
-    `)
-    .eq("song_artist", review.song_artist)
-    .neq("id", review.id)
-    .limit(3)
+  const review = data.review
 
   return (
     <div className="min-h-screen bg-background">
@@ -105,10 +81,10 @@ export default async function ReviewDetailPage({ params }: ReviewDetailPageProps
               },
             }}
             currentUserId={user?.id}
-            likeCount={likeCount}
-            isLiked={isLiked}
-            commentCount={commentCount}
-            isFollowing={isFollowing}
+            likeCount={data.likeCount}
+            isLiked={data.isLiked}
+            commentCount={data.commentCount}
+            isFollowing={data.isFollowing}
           />
         </div>
 
@@ -153,11 +129,11 @@ export default async function ReviewDetailPage({ params }: ReviewDetailPageProps
         )}
 
         {/* Related Reviews */}
-        {relatedReviews && relatedReviews.length > 0 && (
+        {data.relatedReviews && data.relatedReviews.length > 0 && (
           <div className="mb-8">
             <h3 className="font-semibold text-xl text-foreground mb-6">More reviews of {review.song_artist}</h3>
             <div className="space-y-6">
-              {relatedReviews.map((relatedReview) => (
+              {data.relatedReviews.map((relatedReview: any) => (
                 <ReviewCard
                   key={relatedReview.id}
                   review={{
