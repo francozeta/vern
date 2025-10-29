@@ -11,6 +11,7 @@ import { BottomNavigation } from "@/components/navigation/bottom-navigation"
 import { DynamicBreadcrumb } from "@/components/navigation/dynamic-breadcrumb"
 import { Toaster } from "@/components/ui/sonner"
 import { MusicPlayer } from "@/components/player/music-player"
+import { MobilePlayer } from "@/components/player/mobile-player"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,11 +48,12 @@ export default function RootLayout({
               </div>
             </header>
             <main className="flex-1 overflow-y-auto">{children}</main>
-            <div className="sticky bottom-0 z-40 border-t border-border/40 bg-sidebar/80 backdrop-blur-md">
+            <div className="sticky bottom-0 z-40 border-t border-border/40 bg-sidebar/80 backdrop-blur-md hidden md:block">
               <MusicPlayer />
             </div>
             <Toaster />
           </SidebarInset>
+          <MobilePlayer />
           <BottomNavigation />
         </SidebarProvider>
       </body>

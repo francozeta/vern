@@ -63,7 +63,13 @@ export function AccountTab({ profile }: AccountTabProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <SettingsCard title="Social Links" description="Connect your social media profiles to your VERN account">
+      <SettingsCard
+        title="Social Links"
+        description="Connect your social media profiles to your VERN account"
+        footer={
+          <div className="text-xs text-muted-foreground">Add your social media links to help others find you</div>
+        }
+      >
         <div className="space-y-6">
           {/* Website URL */}
           <div className="space-y-2">
@@ -143,7 +149,7 @@ export function AccountTab({ profile }: AccountTabProps) {
         </div>
       )}
 
-      <div className="flex justify-end">
+      <div className="flex justify-end pt-4">
         <Button type="submit" disabled={isSubmitting || !isDirty || !isValid}>
           {isSubmitting ? (
             <>
@@ -151,7 +157,7 @@ export function AccountTab({ profile }: AccountTabProps) {
               Saving...
             </>
           ) : (
-            "Save Changes"
+            "Save"
           )}
         </Button>
       </div>
