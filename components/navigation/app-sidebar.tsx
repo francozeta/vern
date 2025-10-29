@@ -37,49 +37,13 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
     },
     {
       title: "Discover",
-      url: "#",
+      url: "/discover",
       icon: "SquareTerminal",
-      items: [
-        {
-          title: "New Releases",
-          url: "#",
-        },
-        {
-          title: "Trending",
-          url: "#",
-        },
-        {
-          title: "Genres",
-          url: "#",
-        },
-        {
-          title: "Artists",
-          url: "#",
-        },
-      ],
     },
     {
       title: "Reviews",
       url: "/reviews",
       icon: "BookOpen",
-      items: [
-        {
-          title: "All Reviews",
-          url: "/reviews",
-        },
-        {
-          title: "Trending",
-          url: "/reviews?filter=trending",
-        },
-        {
-          title: "Top Rated",
-          url: "/reviews?filter=top-rated",
-        },
-        {
-          title: "Recent",
-          url: "/reviews?filter=recent",
-        },
-      ],
     },
     {
       title: "Search",
@@ -117,32 +81,6 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
       title: "Settings",
       url: "/settings",
       icon: "Settings2",
-      items: [
-        {
-          title: "Profile",
-          url: "/settings/profile",
-        },
-        {
-          title: "Account",
-          url: "/settings/account",
-        },
-        {
-          title: "Preferences",
-          url: "/settings/preferences",
-        },
-        {
-          title: "Billing",
-          url: "/settings/billing",
-        },
-        ...(userRole === "artist" || userRole === "both"
-          ? [
-              {
-                title: "My Songs",
-                url: "/settings/artist",
-              },
-            ]
-          : []),
-      ],
     },
   ]
 

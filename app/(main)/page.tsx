@@ -62,24 +62,13 @@ export default function HomePage() {
               <div className="space-y-6 sticky top-6">
                 <Card className="bg-zinc-900/50 border-zinc-800/50">
                   <CardHeader>
-                    <CardTitle className="text-lg text-white">Get Started</CardTitle>
+                    <CardTitle className="text-lg text-white">Featured Reviews</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button asChild className="w-full justify-start bg-white text-black hover:bg-zinc-100">
-                      <Link href="/login">
-                        <Star className="h-4 w-4 mr-2" />
-                        Sign In
-                      </Link>
-                    </Button>
-                    <Button
-                      asChild
-                      className="w-full justify-start bg-zinc-800/80 hover:bg-zinc-700 text-white border-0"
-                    >
-                      <Link href="/signup">
-                        <Music className="h-4 w-4 mr-2" />
-                        Create Account
-                      </Link>
-                    </Button>
+                  <CardContent className="space-y-3 text-sm text-zinc-400">
+                    <p>
+                      Explore curated reviews from our community of music enthusiasts. Sign in to share your own
+                      thoughts and connect with other listeners.
+                    </p>
                   </CardContent>
                 </Card>
               </div>
