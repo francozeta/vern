@@ -12,7 +12,6 @@ const nextConfig: NextConfig = {
         hostname: "cdn-images.dzcdn.net",
       }
     ],
-    unoptimized: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
