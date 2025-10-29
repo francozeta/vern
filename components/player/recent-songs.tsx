@@ -3,6 +3,7 @@
 import { usePlayerStore } from "@/lib/store/player-store"
 import { Button } from "@/components/ui/button"
 import { Play, ListMusic } from "lucide-react"
+import Image from "next/image"
 import type { Song } from "@/types/player"
 
 interface RecentSongsProps {
@@ -53,9 +54,11 @@ export function RecentSongs({ songs }: RecentSongsProps) {
             {/* Cover Image */}
             <div className="relative aspect-square overflow-hidden bg-zinc-800">
               {song.cover_url ? (
-                <img
+                <Image
                   src={song.cover_url || "/placeholder.svg"}
                   alt={song.title}
+                  width={200}
+                  height={200}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (

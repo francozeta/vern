@@ -5,6 +5,7 @@ import { Star, Play, Heart, MessageCircle, MoreHorizontal, Music } from "lucide-
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { formatDistanceToNow } from "date-fns"
+import Image from "next/image"
 
 interface ProfileReviewCardProps {
   review: {
@@ -53,9 +54,10 @@ export function ProfileReviewCard({ review, isOwnProfile = false, onDelete }: Pr
         <div className="relative flex-shrink-0">
           <div className="w-16 h-16 rounded-lg overflow-hidden bg-zinc-800">
             {review.song_cover_url ? (
-              <img
+              <Image
                 src={review.song_cover_url || "/placeholder.svg"}
                 alt={review.song_title}
+                fill
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             ) : (

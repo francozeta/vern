@@ -1,6 +1,7 @@
 "use client"
 
 import { usePlayerStore } from "@/lib/store/player-store"
+import Image from "next/image"
 import { SiVercel } from "react-icons/si"
 
 interface AlbumCoverProps {
@@ -27,9 +28,11 @@ export function AlbumCover({ size = "md" }: AlbumCoverProps) {
       className={`${sizeClasses[size]} rounded-lg flex-shrink-0 overflow-hidden shadow-lg border border-white/20 flex items-center justify-center bg-gradient-to-br from-white/10 to-white/5 transition-all duration-300 hover:border-white/30`}
     >
       {currentSong?.cover_url ? (
-        <img
+        <Image
           src={currentSong.cover_url || "/placeholder.svg"}
           alt={currentSong.title}
+          width={64}
+          height={64}
           className="h-full w-full object-cover"
         />
       ) : (

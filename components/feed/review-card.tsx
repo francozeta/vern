@@ -29,6 +29,7 @@ import {
 import { deleteReview } from "@/app/actions/reviews"
 import { toast } from "sonner"
 import Link from "next/link"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 interface ReviewCardProps {
@@ -127,11 +128,12 @@ export function ReviewCard({
             {/* Album Cover */}
             <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
               {review.song_cover_url ? (
-                <img
+                <Image
                   src={review.song_cover_url || "/placeholder.svg"}
                   alt={review.song_title}
+                  width={64}
+                  height={64}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onLoad={() => setImageLoaded(true)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -301,11 +303,12 @@ export function ReviewCard({
             {/* Album Cover */}
             <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-muted flex-shrink-0 group-hover:shadow-lg transition-shadow">
               {review.song_cover_url ? (
-                <img
+                <Image
                   src={review.song_cover_url || "/placeholder.svg"}
                   alt={review.song_title}
+                  width={80}
+                  height={80}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  onLoad={() => setImageLoaded(true)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

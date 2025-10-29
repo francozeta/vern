@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { uploadSongAudioClient, uploadSongCoverClient } from "@/lib/supabase/upload"
 import { createSong } from "@/app/actions/songs"
 import { createClient } from "@/lib/supabase/client"
+import Image from "next/image"
 
 interface UploadModalProps {
   open: boolean
@@ -203,9 +204,11 @@ export function UploadModal({ open, onOpenChange, userId }: UploadModalProps) {
                 className="flex items-center justify-center p-4 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
               >
                 {coverPreview ? (
-                  <img
+                  <Image
                     src={coverPreview || "/placeholder.svg"}
                     alt="Cover preview"
+                    width={80}
+                    height={80}
                     className="h-20 w-20 object-cover rounded"
                   />
                 ) : (

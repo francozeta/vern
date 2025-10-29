@@ -19,6 +19,7 @@ import {
 import { createReview, type CreateReviewData } from "@/app/actions/reviews"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
+import Image from "next/image"
 
 interface ReviewModalProps {
   open: boolean
@@ -193,9 +194,11 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
                         >
                           <div className="flex items-center gap-3 sm:gap-4">
                             <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-md sm:rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                              <img
+                              <Image
                                 src={track.album.cover_medium || "/placeholder.svg"}
                                 alt={`${track.title} cover`}
+                                width={56}
+                                height={56}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               />
                               <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -241,9 +244,11 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
               {/* Selected Song Display */}
               <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-accent/30 rounded-lg sm:rounded-xl border border-border/50">
                 <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                  <img
+                  <Image
                     src={selectedSong.coverArt || "/placeholder.svg"}
                     alt={`${selectedSong.title} cover`}
+                    width={64}
+                    height={64}
                     className="w-full h-full object-cover"
                   />
                 </div>

@@ -13,6 +13,7 @@ import { ProfileReviewCard } from "@/components/user/profile-review-card"
 import { FollowStats } from "@/components/user/follow-stats"
 import { useProfileData } from "@/hooks/use-profile-data"
 import Link from "next/link"
+import Image from "next/image"
 import {
   Instagram,
   Verified,
@@ -176,9 +177,11 @@ export function ProfilePageClient({
         <div className="h-56 md:h-64 lg:h-72 relative overflow-hidden">
           {profile.banner_url ? (
             <div className="relative w-full h-full">
-              <img
+              <Image
                 src={profile.banner_url || "/placeholder.svg"}
                 alt="Profile banner"
+                width={1200}
+                height={300}
                 className="w-full h-full object-cover object-center"
                 style={{
                   objectPosition: "center 30%",
@@ -434,9 +437,11 @@ export function ProfilePageClient({
                           <Link key={review.id} href={`/reviews/${review.id}`} className="group cursor-pointer">
                             <div className="aspect-square bg-zinc-900 rounded-xl overflow-hidden mb-3 relative">
                               {review.song_cover_url ? (
-                                <img
+                                <Image
                                   src={review.song_cover_url || "/placeholder.svg"}
                                   alt={review.song_title}
+                                  width={200}
+                                  height={200}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
                               ) : (

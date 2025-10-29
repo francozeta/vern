@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, Play, ExternalLink } from "lucide-react"
 import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function ReviewDetailPage() {
   const params = useParams()
@@ -96,9 +97,11 @@ export default function ReviewDetailPage() {
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted">
                   {review.song_cover_url ? (
-                    <img
+                    <Image
                       src={review.song_cover_url || "/placeholder.svg"}
                       alt={review.song_title}
+                      width={64}
+                      height={64}
                       className="w-full h-full object-cover"
                     />
                   ) : (
