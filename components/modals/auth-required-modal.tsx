@@ -1,18 +1,11 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { LogIn, Music, X } from "lucide-react"
+import Link from "next/link"
+import { SiVercel } from "react-icons/si"
+import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
-import {
-  Credenza,
-  CredenzaContent,
-  CredenzaDescription,
-  CredenzaHeader,
-  CredenzaTitle,
-  CredenzaBody,
-  CredenzaFooter,
-} from "@/components/ui/credenza"
+import { Credenza, CredenzaContent, CredenzaDescription, CredenzaHeader, CredenzaTitle } from "@/components/ui/credenza"
 import { useIsMobile } from "@/hooks/use-mobile"
 
 interface AuthRequiredModalProps {
@@ -31,67 +24,77 @@ export function AuthRequiredModal({
 
   const handleSignIn = () => {
     onOpenChange(false)
-    toast.info("Redirecting to sign in...")
     router.push("/login")
   }
 
   const handleSignUp = () => {
     onOpenChange(false)
-    toast.info("Redirecting to create account...")
     router.push("/signup")
   }
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
-      <CredenzaContent className="border-white/10 bg-black">
-        <CredenzaHeader className="text-center border-b border-white/10 pb-6">
+      <CredenzaContent className="sm:max-w-[500px] p-0 gap-0 bg-background border-border flex flex-col overflow-hidden">
+        <CredenzaHeader className="sr-only">
+          <CredenzaTitle>Join VERN</CredenzaTitle>
+          <CredenzaDescription>Sign in to {action}</CredenzaDescription>
+        </CredenzaHeader>
+
+        {/* Header with close button */}
+        <div className="flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-sm">
+          <div className="flex-1" />
           {isMobile && (
-            <button
-              onClick={() => onOpenChange(false)}
-              className="absolute right-4 top-4 p-1 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <X className="h-5 w-5 text-white" />
+            <button onClick={() => onOpenChange(false)} className="p-1 hover:bg-muted rounded-lg transition-colors">
+              <X className="h-5 w-5 text-foreground" />
             </button>
           )}
+        </div>
 
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center">
-              <Music className="h-8 w-8 text-black" />
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Icon */}
+          <div className="flex justify-center">
+            <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center">
+              <SiVercel className="h-8 w-8 text-background" />
             </div>
           </div>
 
-          <CredenzaTitle className="text-2xl font-bold text-white">Join VERN</CredenzaTitle>
-          <CredenzaDescription className="text-base mt-3 text-white/70">Sign in to {action}</CredenzaDescription>
-        </CredenzaHeader>
-
-        <CredenzaBody className="py-8">
-          <div className="space-y-4 text-center">
-            <p className="text-sm text-white/60 leading-relaxed">
+          {/* Title and description */}
+          <div className="space-y-2 text-center">
+            <h2 className="text-2xl font-bold">Join VERN</h2>
+            <p className="text-sm text-muted-foreground">
               Discover independent music, share thoughtful reviews, and connect with fellow music enthusiasts in our
               curated community.
             </p>
           </div>
-        </CredenzaBody>
 
-        <CredenzaFooter className="flex flex-col gap-3 sm:flex-row border-t border-white/10 pt-6">
+          {/* Call to action */}
+          <div className="space-y-3 pt-4">
+            <p className="text-xs text-muted-foreground text-center">Sign in to {action}</p>
+          </div>
+        </div>
+
+        {/* Footer with buttons */}
+        <div className="border-t border-border p-4 space-y-3 bg-background/50 backdrop-blur-sm">
           <Button
-            variant="outline"
+            onClick={handleSignIn}
+            className="w-full bg-foreground text-background hover:bg-foreground/90 font-medium"
+          >
+            Sign In
+          </Button>
+          <Link href="/signup" className="block">
+            <Button variant="outline" className="w-full border-border hover:bg-muted text-foreground bg-transparent">
+              Create Account
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="border-white/20 hover:bg-white/10 text-white hover:text-white"
+            className="w-full text-muted-foreground hover:text-foreground hover:bg-muted/50"
           >
             Cancel
           </Button>
-          <Button onClick={handleSignIn} className="bg-white text-black hover:bg-white/90 font-medium">
-            <LogIn className="h-4 w-4 mr-2" />
-            Sign In
-          </Button>
-          <Button
-            onClick={handleSignUp}
-            className="bg-white/10 text-white hover:bg-white/20 border border-white/20 font-medium"
-          >
-            Create Account
-          </Button>
-        </CredenzaFooter>
+        </div>
       </CredenzaContent>
     </Credenza>
   )
