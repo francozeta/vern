@@ -28,7 +28,7 @@ export default function ReviewsPage() {
     getUser()
   }, [])
 
-  const { data: reviews = [], isLoading } = useReviews(user?.id || null)
+  const { data: reviews = [], isLoading } = useReviews(null)
 
   return (
     <div className="min-h-screen bg-background">

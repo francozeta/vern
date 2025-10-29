@@ -49,22 +49,26 @@ async function fetchReviews(userId: string | null): Promise<Review[]> {
 
   if (error) throw error
 
-  if (!userId) return reviews || []
-
   const reviewIds = (reviews || []).map((r) => r.id)
+
+  if (reviewIds.length === 0) return reviews || []
 
   const results = await Promise.allSettled([
     supabase.from("likes").select("review_id, user_id").in("review_id", reviewIds),
     supabase.from("review_comments").select("review_id").in("review_id", reviewIds),
-    supabase.from("likes").select("review_id").in("review_id", reviewIds).eq("user_id", userId),
-    supabase
-      .from("follows")
-      .select("following_id")
-      .eq("follower_id", userId)
-      .in(
-        "following_id",
-        (reviews || []).map((r) => r.user_id),
-      ),
+    userId
+      ? supabase.from("likes").select("review_id").in("review_id", reviewIds).eq("user_id", userId)
+      : Promise.resolve({ data: [] }),
+    userId
+      ? supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", userId)
+          .in(
+            "following_id",
+            (reviews || []).map((r) => r.user_id),
+          )
+      : Promise.resolve({ data: [] }),
   ])
 
   const allLikes = results[0].status === "fulfilled" ? results[0].value.data : []

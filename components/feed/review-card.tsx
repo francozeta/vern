@@ -75,7 +75,7 @@ export function ReviewCard({
   const [isDeleting, setIsDeleting] = useState(false)
   const isOwnReview = currentUserId === review.user.id
 
-  const reviewUrl = `/reviews/${review.id}` // Simplified to only use ID
+  const reviewUrl = `/reviews/${review.id}`
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -108,7 +108,6 @@ export function ReviewCard({
       const result = await deleteReview(review.id)
       if (result.success) {
         toast.success("Review deleted successfully")
-        // Refresh the page to update the UI
         window.location.reload()
       } else {
         toast.error(result.error || "Failed to delete review")
@@ -361,8 +360,14 @@ export function ReviewCard({
                 initialLikeCount={likeCount}
                 initialIsLiked={isLiked}
                 className="text-sm"
+                currentUserId={currentUserId}
               />
-              <CommentButton reviewId={review.id} initialCommentCount={commentCount} className="text-sm" />
+              <CommentButton
+                reviewId={review.id}
+                initialCommentCount={commentCount}
+                className="text-sm"
+                currentUserId={currentUserId}
+              />
             </div>
             <Button
               variant="ghost"
