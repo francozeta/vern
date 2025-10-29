@@ -223,12 +223,12 @@ export async function getRecentActivity(limit = 20, offset = 0) {
   return { activities }
 }
 
-export async function getEnhancedActivity(userId: string, limit = 10, offset = 0, showFollowingOnly = false) {
+export async function getEnhancedActivity(userId: string | null, limit = 10, offset = 0, showFollowingOnly = false) {
   const supabase = await createServerSupabaseClient()
 
   // Step 1: Get base activities
   let result
-  if (showFollowingOnly) {
+  if (showFollowingOnly && userId) {
     result = await getFollowingActivity(userId, limit, offset)
   } else {
     result = await getRecentActivity(limit, offset)
@@ -248,48 +248,65 @@ export async function getEnhancedActivity(userId: string, limit = 10, offset = 0
     return { activities: result.activities }
   }
 
-  // Step 3: Batch fetch likes, comments, and follows (3 queries instead of 30+)
-  const [likesData, commentsData, followsData] = await Promise.all([
+  // Step 3: Batch fetch likes, comments, and follows (4 queries instead of 30+)
+  const [likesData, commentsData, followsData, userLikesData] = await Promise.all([
+    // Get like counts per review
     supabase
       .from("likes")
-      .select("review_id, count(*)")
+      .select("review_id")
       .in("review_id", reviewIds)
       .then((res) => {
         if (res.error) return {}
         const map: Record<string, number> = {}
         res.data?.forEach((item: any) => {
-          map[item.review_id] = item.count || 0
+          map[item.review_id] = (map[item.review_id] || 0) + 1
         })
         return map
       }),
+    // Get comment counts per review
     supabase
       .from("review_comments")
-      .select("review_id, count(*)")
+      .select("review_id")
       .in("review_id", reviewIds)
       .then((res) => {
         if (res.error) return {}
         const map: Record<string, number> = {}
         res.data?.forEach((item: any) => {
-          map[item.review_id] = item.count || 0
+          map[item.review_id] = (map[item.review_id] || 0) + 1
         })
         return map
       }),
-    supabase
-      .from("follows")
-      .select("following_id")
-      .eq("follower_id", userId)
-      .in("following_id", userIds)
-      .then((res) => {
-        if (res.error) return new Set()
-        return new Set(res.data?.map((f: any) => f.following_id) || [])
-      }),
+    // Get follows for current user
+    userId
+      ? supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", userId)
+          .in("following_id", userIds)
+          .then((res) => {
+            if (res.error) return new Set()
+            return new Set(res.data?.map((f: any) => f.following_id) || [])
+          })
+      : Promise.resolve(new Set()),
+    // Get likes by current user
+    userId
+      ? supabase
+          .from("likes")
+          .select("review_id")
+          .eq("user_id", userId)
+          .in("review_id", reviewIds)
+          .then((res) => {
+            if (res.error) return new Set()
+            return new Set(res.data?.map((l: any) => l.review_id) || [])
+          })
+      : Promise.resolve(new Set()),
   ])
 
   // Step 4: Merge data with activities
   const enhancedActivities = result.activities.map((activity: any) => ({
     ...activity,
     likeCount: likesData[activity.content.review_id] || 0,
-    isLiked: false, // Will be set by client if needed
+    isLiked: userLikesData.has(activity.content.review_id),
     commentCount: commentsData[activity.content.review_id] || 0,
     isFollowing: followsData.has(activity.user?.id),
   }))

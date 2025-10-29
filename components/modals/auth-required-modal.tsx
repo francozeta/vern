@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { LogIn, Music } from "lucide-react"
+import { LogIn, Music, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import {
@@ -13,6 +13,7 @@ import {
   CredenzaBody,
   CredenzaFooter,
 } from "@/components/ui/credenza"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface AuthRequiredModalProps {
   open: boolean
@@ -26,6 +27,7 @@ export function AuthRequiredModal({
   action = "interact with this content",
 }: AuthRequiredModalProps) {
   const router = useRouter()
+  const isMobile = useIsMobile()
 
   const handleSignIn = () => {
     onOpenChange(false)
@@ -41,38 +43,52 @@ export function AuthRequiredModal({
 
   return (
     <Credenza open={open} onOpenChange={onOpenChange}>
-      <CredenzaContent className="border-border/50">
-        <CredenzaHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
-              <Music className="h-8 w-8 text-white" />
+      <CredenzaContent className="border-white/10 bg-black">
+        <CredenzaHeader className="text-center border-b border-white/10 pb-6">
+          {isMobile && (
+            <button
+              onClick={() => onOpenChange(false)}
+              className="absolute right-4 top-4 p-1 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-white" />
+            </button>
+          )}
+
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center">
+              <Music className="h-8 w-8 text-black" />
             </div>
           </div>
-          <CredenzaTitle className="text-2xl font-bold">Join the Community</CredenzaTitle>
-          <CredenzaDescription className="text-base mt-2">Sign in to {action}</CredenzaDescription>
+
+          <CredenzaTitle className="text-2xl font-bold text-white">Join VERN</CredenzaTitle>
+          <CredenzaDescription className="text-base mt-3 text-white/70">Sign in to {action}</CredenzaDescription>
         </CredenzaHeader>
 
-        <CredenzaBody className="py-6">
+        <CredenzaBody className="py-8">
           <div className="space-y-4 text-center">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Discover music, share reviews, and connect with other music lovers. Create an account or sign in to get
-              started.
+            <p className="text-sm text-white/60 leading-relaxed">
+              Discover independent music, share thoughtful reviews, and connect with fellow music enthusiasts in our
+              curated community.
             </p>
           </div>
         </CredenzaBody>
 
-        <CredenzaFooter className="flex flex-col gap-3 sm:flex-row">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-border/50 hover:bg-muted">
+        <CredenzaFooter className="flex flex-col gap-3 sm:flex-row border-t border-white/10 pt-6">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-white/20 hover:bg-white/10 text-white hover:text-white"
+          >
             Cancel
           </Button>
-          <Button
-            onClick={handleSignIn}
-            className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white border-0"
-          >
+          <Button onClick={handleSignIn} className="bg-white text-black hover:bg-white/90 font-medium">
             <LogIn className="h-4 w-4 mr-2" />
             Sign In
           </Button>
-          <Button onClick={handleSignUp} className="bg-foreground text-background hover:bg-foreground/90">
+          <Button
+            onClick={handleSignUp}
+            className="bg-white/10 text-white hover:bg-white/20 border border-white/20 font-medium"
+          >
             Create Account
           </Button>
         </CredenzaFooter>

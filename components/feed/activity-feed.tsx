@@ -14,7 +14,7 @@ interface ActivityFeedProps {
 export function ActivityFeed({ currentUserId, showFollowingOnly = false }: ActivityFeedProps) {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["activity", currentUserId, showFollowingOnly],
-    queryFn: () => getEnhancedActivity(currentUserId || null, 10, 0, showFollowingOnly),
+    queryFn: () => getEnhancedActivity(currentUserId ?? null, 10, 0, showFollowingOnly),
     staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
   })
