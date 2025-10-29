@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useUserSession } from "@/hooks/use-user-session"
 import { useHomeData } from "@/hooks/use-home-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +13,7 @@ import { RecentSongs } from "@/components/player/recent-songs"
 import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 import Link from "next/link"
 
-function ActivityFeedSection({ userId }: { userId: string }) {
+function ActivityFeedSection({ userId }: { userId?: string | null }) {
   return (
     <Suspense fallback={<div className="text-zinc-500">Loading feed…</div>}>
       <ActivityFeed currentUserId={userId} showFollowingOnly={false} />
@@ -21,10 +21,10 @@ function ActivityFeedSection({ userId }: { userId: string }) {
   )
 }
 
-function SuggestedUsersSection({ userId }: { userId: string }) {
+function SuggestedUsersSection({ userId }: { userId?: string | null }) {
   return (
     <Suspense fallback={<div className="text-zinc-500">Loading suggestions…</div>}>
-      <SuggestedUsers currentUserId={userId} />
+      {userId && <SuggestedUsers currentUserId={userId} />}
     </Suspense>
   )
 }
@@ -32,12 +32,63 @@ function SuggestedUsersSection({ userId }: { userId: string }) {
 export default function HomePage() {
   const { user, loading: isLoadingAuth } = useUserSession()
   const { data: homeData, isLoading } = useHomeData(user?.id)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   if (isLoadingAuth) return <SettingsSkeleton />
 
-  if (!user) return null
+  if (!mounted) return <SettingsSkeleton />
 
-  if (isLoading && !homeData) return <SettingsSkeleton />
+  if (isLoading && !homeData && user) return <SettingsSkeleton />
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <div className="max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-7 lg:py-8">
+          <div className="space-y-2 mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">Discover Music Reviews</h1>
+            <p className="text-zinc-400">Explore reviews from music enthusiasts around the world.</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 md:gap-8">
+            <div className="min-w-0">
+              <ActivityFeedSection userId={null} />
+            </div>
+
+            <div className="w-full lg:w-[300px]">
+              <div className="space-y-6 sticky top-6">
+                <Card className="bg-zinc-900/50 border-zinc-800/50">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-white">Get Started</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button asChild className="w-full justify-start bg-white text-black hover:bg-zinc-100">
+                      <Link href="/login">
+                        <Star className="h-4 w-4 mr-2" />
+                        Sign In
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      className="w-full justify-start bg-zinc-800/80 hover:bg-zinc-700 text-white border-0"
+                    >
+                      <Link href="/signup">
+                        <Music className="h-4 w-4 mr-2" />
+                        Create Account
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (!homeData) return null
 
