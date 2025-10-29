@@ -3,15 +3,17 @@
 import { useQuery } from "@tanstack/react-query"
 import { createBrowserSupabaseClient } from "@/lib/supabase/client"
 
+interface Profile {
+  id: string
+  username: string
+  display_name: string | null
+  avatar_url: string | null
+  bio: string | null
+  role: "listener" | "artist" | "both"
+}
+
 interface HomeData {
-  profile: {
-    id: string
-    username: string
-    display_name: string | null
-    avatar_url: string | null
-    bio: string | null
-    role: "listener" | "artist" | "both"
-  }
+  profile: Profile
   reviewCount: number
   followingCount: number
   followersCount: number
@@ -29,8 +31,26 @@ async function fetchHomeData(userId: string): Promise<HomeData> {
     supabase.from("songs").select("*").limit(8),
   ])
 
+  const profile: Profile = profileResult.data
+    ? {
+        id: profileResult.data.id,
+        username: profileResult.data.username,
+        display_name: profileResult.data.display_name,
+        avatar_url: profileResult.data.avatar_url,
+        bio: profileResult.data.bio,
+        role: profileResult.data.role,
+      }
+    : {
+        id: userId,
+        username: "Unknown",
+        display_name: null,
+        avatar_url: null,
+        bio: null,
+        role: "listener",
+      }
+
   return {
-    profile: profileResult.data || {},
+    profile,
     reviewCount: reviewCountResult.count || 0,
     followingCount: followingResult.count || 0,
     followersCount: followersResult.count || 0,
@@ -38,11 +58,12 @@ async function fetchHomeData(userId: string): Promise<HomeData> {
   }
 }
 
-export function useHomeData(userId: string | null) {
+export function useHomeData(userId?: string) {
   return useQuery({
     queryKey: ["home", userId],
     queryFn: () => fetchHomeData(userId!),
     enabled: !!userId,
-    staleTime: 60_000,
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
   })
 }

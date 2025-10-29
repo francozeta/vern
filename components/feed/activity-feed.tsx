@@ -1,13 +1,9 @@
 "use client"
-
-import { useState, useEffect, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ReviewCard } from "@/components/feed/review-card"
-import { getFollowingActivity, getRecentActivity } from "@/app/actions/activity"
-import { getLikeStatus } from "@/app/actions/likes"
-import { getCommentCount } from "@/app/actions/comments"
-import { checkFollowStatus } from "@/app/actions/follows"
+import { getEnhancedActivity } from "@/app/actions/activity"
+import { useQuery } from "@tanstack/react-query"
 import { Music, RefreshCw } from "lucide-react"
 
 interface ActivityFeedProps {
@@ -16,104 +12,19 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ currentUserId, showFollowingOnly = false }: ActivityFeedProps) {
-  const [activities, setActivities] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["activity", currentUserId, showFollowingOnly],
+    queryFn: () => getEnhancedActivity(currentUserId!, 10, 0, showFollowingOnly),
+    enabled: !!currentUserId,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+  })
 
-  const loadActivities = useCallback(async () => {
-    try {
-      let result
-      if (showFollowingOnly && currentUserId) {
-        result = await getFollowingActivity(currentUserId, 10)
-      } else {
-        result = await getRecentActivity(10)
-      }
+  const activities = data?.activities || []
 
-      if (result.activities) {
-        if (currentUserId) {
-          const enhancedActivities = await Promise.all(
-            result.activities.map(async (activity) => {
-              if (activity.type === "review") {
-                try {
-                  const [likeStatus, commentCount, followStatus] = await Promise.all([
-                    getLikeStatus(activity.content.review_id, currentUserId),
-                    getCommentCount(activity.content.review_id),
-                    checkFollowStatus(currentUserId, activity.user.id),
-                  ])
-
-                  return {
-                    ...activity,
-                    likeCount: likeStatus.success && likeStatus.data ? likeStatus.data.totalLikes : 0,
-                    isLiked: likeStatus.success && likeStatus.data ? likeStatus.data.isLiked : false,
-                    commentCount: commentCount.success ? commentCount.count : 0,
-                    isFollowing: followStatus.success ? followStatus.isFollowing : false,
-                  }
-                } catch (error) {
-                  console.error("Error enhancing activity:", error)
-                  return activity
-                }
-              }
-              return activity
-            }),
-          )
-          setActivities(enhancedActivities)
-        } else {
-          setActivities(result.activities)
-        }
-      }
-    } catch (error) {
-      console.error("Error loading activities:", error)
-    } finally {
-      setIsLoading(false)
-      setIsRefreshing(false)
-    }
-  }, [currentUserId, showFollowingOnly])
-
-  useEffect(() => {
-    loadActivities()
-  }, [loadActivities])
-
-  const handleRefresh = useCallback(() => {
-    setIsRefreshing(true)
-    loadActivities()
-  }, [loadActivities])
-
-  const ActivityItem = useMemo(() => {
-    return ({ activity }: { activity: any }) => {
-      if (activity.type === "review") {
-        return (
-          <ReviewCard
-            review={{
-              id: activity.content.review_id,
-              title: activity.content.title,
-              content: activity.content.content,
-              rating: activity.content.rating,
-              created_at: activity.created_at,
-              song_title: activity.content.song_title,
-              song_artist: activity.content.song_artist,
-              song_album: activity.content.song_album,
-              song_cover_url: activity.content.song_cover_url,
-              song_preview_url: activity.content.song_preview_url,
-              user: {
-                id: activity.user.id,
-                username: activity.user.username,
-                display_name: activity.user.display_name,
-                avatar_url: activity.user.avatar_url,
-                is_verified: activity.user.is_verified,
-                role: activity.user.role,
-              },
-            }}
-            currentUserId={currentUserId}
-            likeCount={activity.likeCount || 0}
-            isLiked={activity.isLiked || false}
-            commentCount={activity.commentCount || 0}
-            isFollowing={activity.isFollowing || false}
-          />
-        )
-      }
-      return null
-    }
-  }, [currentUserId])
+  const handleRefresh = () => {
+    refetch()
+  }
 
   if (isLoading) {
     return (
@@ -152,19 +63,44 @@ export function ActivityFeed({ currentUserId, showFollowingOnly = false }: Activ
         </h2>
         <Button
           onClick={handleRefresh}
-          disabled={isRefreshing}
           variant="ghost"
           size="sm"
           className="text-muted-foreground hover:text-foreground"
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+          <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
 
       {activities.length > 0 ? (
         <div className="space-y-6">
-          {activities.map((activity) => (
-            <ActivityItem key={activity.id} activity={activity} />
+          {activities.map((activity: any) => (
+            <ReviewCard
+              key={activity.id}
+              review={{
+                id: activity.content.review_id,
+                title: activity.content.title,
+                content: activity.content.content,
+                rating: activity.content.rating,
+                created_at: activity.created_at,
+                song_title: activity.content.song_title,
+                song_artist: activity.content.song_artist,
+                song_cover_url: activity.content.song_cover_url,
+                song_preview_url: activity.content.song_preview_url,
+                user: {
+                  id: activity.user.id,
+                  username: activity.user.username,
+                  display_name: activity.user.display_name,
+                  avatar_url: activity.user.avatar_url,
+                  is_verified: activity.user.is_verified,
+                  role: activity.user.role,
+                },
+              }}
+              currentUserId={currentUserId}
+              likeCount={activity.likeCount}
+              isLiked={activity.isLiked}
+              commentCount={activity.commentCount}
+              isFollowing={activity.isFollowing}
+            />
           ))}
         </div>
       ) : (

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { Suspense } from "react"
+import { useUserSession } from "@/hooks/use-user-session"
 import { useHomeData } from "@/hooks/use-home-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,23 +13,33 @@ import { RecentSongs } from "@/components/player/recent-songs"
 import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 import Link from "next/link"
 
+function ActivityFeedSection({ userId }: { userId: string }) {
+  return (
+    <Suspense fallback={<div className="text-zinc-500">Loading feed…</div>}>
+      <ActivityFeed currentUserId={userId} showFollowingOnly={false} />
+    </Suspense>
+  )
+}
+
+function SuggestedUsersSection({ userId }: { userId: string }) {
+  return (
+    <Suspense fallback={<div className="text-zinc-500">Loading suggestions…</div>}>
+      <SuggestedUsers currentUserId={userId} />
+    </Suspense>
+  )
+}
+
 export default function HomePage() {
-  const supabase = createBrowserSupabaseClient()
-  const [user, setUser] = useState<any>(null)
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
+  const { user, loading: isLoadingAuth } = useUserSession()
+  const { data: homeData, isLoading } = useHomeData(user?.id)
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-      setIsLoadingAuth(false)
-    })
-  }, [supabase])
+  if (isLoadingAuth) return <SettingsSkeleton />
 
-  const { data: homeData, isLoading } = useHomeData(user?.id || null)
+  if (!user) return null
 
-  if (isLoadingAuth || isLoading) return <SettingsSkeleton />
+  if (isLoading && !homeData) return <SettingsSkeleton />
 
-  if (!user || !homeData) return null
+  if (!homeData) return null
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -118,11 +128,13 @@ export default function HomePage() {
               </TabsList>
 
               <TabsContent value="for-you" className="mt-0">
-                <ActivityFeed currentUserId={user.id} showFollowingOnly={false} />
+                <ActivityFeedSection userId={user.id} />
               </TabsContent>
 
               <TabsContent value="following" className="mt-0">
-                <ActivityFeed currentUserId={user.id} showFollowingOnly={true} />
+                <Suspense fallback={<div className="text-zinc-500">Loading feed…</div>}>
+                  <ActivityFeed currentUserId={user.id} showFollowingOnly={true} />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </div>
@@ -131,7 +143,7 @@ export default function HomePage() {
           <div className="w-full lg:w-[300px]">
             <div className="space-y-6 sticky top-6">
               {/* Suggested Users */}
-              <SuggestedUsers currentUserId={user.id} />
+              <SuggestedUsersSection userId={user.id} />
 
               {/* Quick Actions */}
               <Card className="bg-zinc-900/50 border-zinc-800/50">
@@ -166,4 +178,3 @@ export default function HomePage() {
     </div>
   )
 }
-  
