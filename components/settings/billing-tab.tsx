@@ -4,14 +4,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CreditCard, Crown, Zap } from "lucide-react"
+import { SettingsCard } from "@/components/settings/settings-card"
 
 export function BillingTab() {
   return (
-    <div className="space-y-8">
-      {/* Current Plan */}
-      <div className="space-y-6">
-        <h3 className="text-lg font-semibold">Current Plan</h3>
-
+    <div className="space-y-6">
+      <SettingsCard title="Current Plan" description="Your subscription details" footerText="Manage your subscription">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -45,12 +43,13 @@ export function BillingTab() {
             </ul>
           </CardContent>
         </Card>
-      </div>
+      </SettingsCard>
 
-      {/* Available Plans */}
-      <div className="space-y-6">
-        <h3 className="text-lg font-semibold">Upgrade Your Plan</h3>
-
+      <SettingsCard
+        title="Upgrade Your Plan"
+        description="Choose a plan that fits your needs"
+        footerText="Unlock premium features"
+      >
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -128,27 +127,24 @@ export function BillingTab() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </SettingsCard>
 
-      {/* Payment Method */}
-      <div className="space-y-6">
-        <h3 className="text-lg font-semibold">Payment Method</h3>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CreditCard className="h-8 w-8 text-muted-foreground" />
-                <div>
-                  <div className="font-medium">No payment method</div>
-                  <div className="text-sm text-muted-foreground">Add a payment method to upgrade</div>
-                </div>
-              </div>
-              <Button variant="outline">Add Payment Method</Button>
+      <SettingsCard
+        title="Payment Method"
+        description="Manage your billing information"
+        footerText="Add a payment method to upgrade"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CreditCard className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <div className="font-medium">No payment method</div>
+              <div className="text-sm text-muted-foreground">Add a payment method to upgrade</div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <Button variant="outline">Add Payment Method</Button>
+        </div>
+      </SettingsCard>
     </div>
   )
 }

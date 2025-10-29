@@ -1,16 +1,29 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SettingsCard } from "@/components/settings/settings-card"
 
 export function GeneralTab() {
-  return (
-    <div className="space-y-8">
-      <div className="space-y-6">
-        <h3 className="text-lg font-semibold">Notifications</h3>
+  const [isSaving, setIsSaving] = useState(false)
 
+  const handleSave = async () => {
+    setIsSaving(true)
+    // TODO: Implement save logic
+    setTimeout(() => setIsSaving(false), 1000)
+  }
+
+  return (
+    <div className="space-y-6">
+      <SettingsCard
+        title="Notifications"
+        description="Manage how you receive updates"
+        footerText="Choose your notification preferences"
+        onSave={handleSave}
+        isSaving={isSaving}
+      >
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -28,11 +41,15 @@ export function GeneralTab() {
             <Switch />
           </div>
         </div>
-      </div>
+      </SettingsCard>
 
-      <div className="space-y-6">
-        <h3 className="text-lg font-semibold">Privacy</h3>
-
+      <SettingsCard
+        title="Privacy"
+        description="Control your profile visibility"
+        footerText="Your privacy settings"
+        onSave={handleSave}
+        isSaving={isSaving}
+      >
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Profile Visibility</Label>
@@ -48,9 +65,7 @@ export function GeneralTab() {
             <p className="text-sm text-muted-foreground">Control who can see your profile</p>
           </div>
         </div>
-      </div>
-
-      <Button className="w-full sm:w-auto">Save Preferences</Button>
+      </SettingsCard>
     </div>
   )
 }

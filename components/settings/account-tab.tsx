@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AlertCircle, Link, Instagram } from "lucide-react"
@@ -66,12 +65,11 @@ export function AccountTab({ profile }: AccountTabProps) {
       <SettingsCard
         title="Social Links"
         description="Connect your social media profiles to your VERN account"
-        footer={
-          <div className="text-xs text-muted-foreground">Add your social media links to help others find you</div>
-        }
+        footerText="Add your social media links to help others find you"
+        onSave={handleSubmit(onSubmit)}
+        isSaving={isSubmitting}
       >
         <div className="space-y-6">
-          {/* Website URL */}
           <div className="space-y-2">
             <Label htmlFor="website_url">Website</Label>
             <div className="relative">
@@ -91,7 +89,6 @@ export function AccountTab({ profile }: AccountTabProps) {
             )}
           </div>
 
-          {/* Spotify URL */}
           <div className="space-y-2">
             <Label htmlFor="spotify_url">Spotify</Label>
             <div className="relative">
@@ -111,7 +108,6 @@ export function AccountTab({ profile }: AccountTabProps) {
             )}
           </div>
 
-          {/* Instagram URL */}
           <div className="space-y-2">
             <Label htmlFor="instagram_url">Instagram</Label>
             <div className="relative">
@@ -133,7 +129,6 @@ export function AccountTab({ profile }: AccountTabProps) {
         </div>
       </SettingsCard>
 
-      {/* Submit Error */}
       {submitError && (
         <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
           <AlertCircle className="size-4 flex-shrink-0" />
@@ -141,26 +136,12 @@ export function AccountTab({ profile }: AccountTabProps) {
         </div>
       )}
 
-      {/* Submit Success */}
       {submitSuccess && (
         <div className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 rounded-md">
           <AlertCircle className="size-4 flex-shrink-0" />
           {submitSuccess}
         </div>
       )}
-
-      <div className="flex justify-end pt-4">
-        <Button type="submit" disabled={isSubmitting || !isDirty || !isValid}>
-          {isSubmitting ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-              Saving...
-            </>
-          ) : (
-            "Save"
-          )}
-        </Button>
-      </div>
     </form>
   )
 }
