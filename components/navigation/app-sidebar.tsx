@@ -1,11 +1,9 @@
 import type * as React from "react"
-
-import { NavMain } from "@/components/navigation/nav-main"
-import { NavProjects } from "@/components/navigation/nav-projects"
 import { NavUser } from "@/components/navigation/nav-user"
 import { AppBranding } from "@/components/layout/app-branding"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { AppSidebarContent } from "@/components/navigation/app-sidebar-content"
 
 export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const supabase = await createServerSupabaseClient()
@@ -119,6 +117,32 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
       title: "Settings",
       url: "/settings",
       icon: "Settings2",
+      items: [
+        {
+          title: "Profile",
+          url: "/settings/profile",
+        },
+        {
+          title: "Account",
+          url: "/settings/account",
+        },
+        {
+          title: "Preferences",
+          url: "/settings/preferences",
+        },
+        {
+          title: "Billing",
+          url: "/settings/billing",
+        },
+        ...(userRole === "artist" || userRole === "both"
+          ? [
+              {
+                title: "My Songs",
+                url: "/settings/artist",
+              },
+            ]
+          : []),
+      ],
     },
   ]
 
@@ -149,8 +173,7 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
         <AppBranding />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMainData} />
-        {projectsData.length > 0 && <NavProjects projects={projectsData} />}
+        <AppSidebarContent navMainData={navMainData} projectsData={projectsData} userRole={userRole} />
       </SidebarContent>
       <SidebarFooter>{userData && <NavUser user={userData} />}</SidebarFooter>
       <SidebarRail />

@@ -11,6 +11,7 @@ import { FaSpotify } from "react-icons/fa"
 import { cn } from "@/lib/utils"
 import { updateAccountSettings } from "@/app/actions/settings"
 import { accountSettingsSchema, type AccountSettingsInput } from "@/lib/validations/settings"
+import { SettingsCard } from "@/components/settings/settings-card"
 
 interface AccountTabProps {
   profile: {
@@ -61,70 +62,70 @@ export function AccountTab({ profile }: AccountTabProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      <div className="space-y-6">
-        <h3 className="text-lg font-semibold">Social Links</h3>
-
-        {/* Website URL */}
-        <div className="space-y-2">
-          <Label htmlFor="website_url">Website</Label>
-          <div className="relative">
-            <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="website_url"
-              {...register("website_url")}
-              placeholder="https://yourwebsite.com"
-              className={cn("pl-10", errors.website_url && "border-destructive focus-visible:ring-destructive/20")}
-            />
-          </div>
-          {errors.website_url && (
-            <div className="flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="size-4" />
-              {errors.website_url.message}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <SettingsCard title="Social Links" description="Connect your social media profiles to your VERN account">
+        <div className="space-y-6">
+          {/* Website URL */}
+          <div className="space-y-2">
+            <Label htmlFor="website_url">Website</Label>
+            <div className="relative">
+              <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="website_url"
+                {...register("website_url")}
+                placeholder="https://yourwebsite.com"
+                className={cn("pl-10", errors.website_url && "border-destructive focus-visible:ring-destructive/20")}
+              />
             </div>
-          )}
-        </div>
-
-        {/* Spotify URL */}
-        <div className="space-y-2">
-          <Label htmlFor="spotify_url">Spotify</Label>
-          <div className="relative">
-            <FaSpotify className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="spotify_url"
-              {...register("spotify_url")}
-              placeholder="https://open.spotify.com/user/username"
-              className={cn("pl-10", errors.spotify_url && "border-destructive focus-visible:ring-destructive/20")}
-            />
+            {errors.website_url && (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="size-4" />
+                {errors.website_url.message}
+              </div>
+            )}
           </div>
-          {errors.spotify_url && (
-            <div className="flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="size-4" />
-              {errors.spotify_url.message}
-            </div>
-          )}
-        </div>
 
-        {/* Instagram URL */}
-        <div className="space-y-2">
-          <Label htmlFor="instagram_url">Instagram</Label>
-          <div className="relative">
-            <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="instagram_url"
-              {...register("instagram_url")}
-              placeholder="https://instagram.com/username"
-              className={cn("pl-10", errors.instagram_url && "border-destructive focus-visible:ring-destructive/20")}
-            />
-          </div>
-          {errors.instagram_url && (
-            <div className="flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="size-4" />
-              {errors.instagram_url.message}
+          {/* Spotify URL */}
+          <div className="space-y-2">
+            <Label htmlFor="spotify_url">Spotify</Label>
+            <div className="relative">
+              <FaSpotify className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="spotify_url"
+                {...register("spotify_url")}
+                placeholder="https://open.spotify.com/user/username"
+                className={cn("pl-10", errors.spotify_url && "border-destructive focus-visible:ring-destructive/20")}
+              />
             </div>
-          )}
+            {errors.spotify_url && (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="size-4" />
+                {errors.spotify_url.message}
+              </div>
+            )}
+          </div>
+
+          {/* Instagram URL */}
+          <div className="space-y-2">
+            <Label htmlFor="instagram_url">Instagram</Label>
+            <div className="relative">
+              <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="instagram_url"
+                {...register("instagram_url")}
+                placeholder="https://instagram.com/username"
+                className={cn("pl-10", errors.instagram_url && "border-destructive focus-visible:ring-destructive/20")}
+              />
+            </div>
+            {errors.instagram_url && (
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="size-4" />
+                {errors.instagram_url.message}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </SettingsCard>
 
       {/* Submit Error */}
       {submitError && (
@@ -142,17 +143,18 @@ export function AccountTab({ profile }: AccountTabProps) {
         </div>
       )}
 
-      {/* Submit Button */}
-      <Button type="submit" disabled={isSubmitting || !isDirty || !isValid} className="w-full sm:w-auto">
-        {isSubmitting ? (
-          <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-            Saving Changes...
-          </>
-        ) : (
-          "Save Changes"
-        )}
-      </Button>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isSubmitting || !isDirty || !isValid}>
+          {isSubmitting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
+        </Button>
+      </div>
     </form>
   )
 }
