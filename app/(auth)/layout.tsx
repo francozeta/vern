@@ -7,10 +7,6 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -23,18 +19,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.className} antialiased dark`}
-      >
-        <div className="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-          <div className="w-full max-w-sm">
+    <div className={`${geistSans.className} bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10 dark antialiased text-neutral-100 `}>
+      <div className="w-full max-w-sm">
 
-            {children}
-          </div>
-        </div>
-      </body>
-    </html>
+        {children}
+      </div>
+    </div>
   );
 }
 
