@@ -46,7 +46,7 @@ export default function HomePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen text-white">
         <div className="max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-7 lg:py-8">
           <div className="space-y-2 mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-white">Discover Music Reviews</h1>
@@ -82,7 +82,7 @@ export default function HomePage() {
   if (!homeData) return null
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen text-white">
       <div className="max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-7 lg:py-8">
         {/* Welcome Section */}
         <div className="space-y-2 mb-8">
@@ -152,7 +152,7 @@ export default function HomePage() {
           {/* Activity Feed */}
           <div className="min-w-0">
             <Tabs defaultValue="for-you" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-zinc-900/50 border border-zinc-800/50 rounded-lg mb-6">
+              <TabsList className="grid w-full grid-cols-2 bg-zinc-900/50 border-zinc-800/50 rounded-lg mb-6">
                 <TabsTrigger
                   value="for-you"
                   className="data-[state=active]:bg-white data-[state=active]:text-black text-zinc-400"

@@ -13,6 +13,7 @@ import Image from "next/image"
 import { useDebounce } from "@/hooks/use-debounce"
 import { searchDeezer, searchDeezerArtists, type DeezerTrack, type DeezerArtist } from "@/lib/deezer"
 import { useSearchUsers, useSearchDeezer } from "@/hooks/use-search"
+import { PageContainer } from "@/components/layout/page-container"
 
 const MUSIC_CATEGORIES = [
   {
@@ -255,294 +256,292 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 xl:px-16 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Discover Music</h1>
-          <p className="text-muted-foreground">Search for songs, artists, and connect with the community</p>
-        </div>
+    <PageContainer maxWidth="2xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-2">Discover Music</h1>
+        <p className="text-muted-foreground">Search for songs, artists, and connect with the community</p>
+      </div>
 
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Search reviews, songs, or artists..."
+              className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground"
+              autoFocus
+            />
+          </div>
+          <Select value={sortBy} onValueChange={(value: "recent" | "popular") => setSortBy(value)}>
+            <SelectTrigger className="w-full sm:w-48 bg-card border-border text-foreground">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="recent">Most Recent</SelectItem>
+              <SelectItem value="popular">Most Popular</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" className="bg-card border-border">
+            <Filter className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {recentSearches.length > 0 && !query && (
         <div className="mb-8">
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Search reviews, songs, or artists..."
-                className="pl-10 bg-card border-border"
-                autoFocus
-              />
-            </div>
-            <Select value={sortBy} onValueChange={(value: "recent" | "popular") => setSortBy(value)}>
-              <SelectTrigger className="w-full sm:w-48 bg-card border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Most Recent</SelectItem>
-                <SelectItem value="popular">Most Popular</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="icon" className="bg-card border-border">
-              <Filter className="h-4 w-4" />
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-foreground">Recent Searches</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearRecentSearches}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 text-sm font-medium"
+            >
+              Clear All
             </Button>
           </div>
-        </div>
 
-        {recentSearches.length > 0 && !query && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-foreground">Recent Searches</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearRecentSearches}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 text-sm font-medium"
+          <div className="space-y-3">
+            {recentSearches.map((search) => (
+              <div
+                key={search.id}
+                className="flex items-center justify-between p-4 rounded-lg bg-card hover:bg-muted/50 cursor-pointer group transition-colors border border-border"
+                onClick={() => {
+                  if (search.query) {
+                    setQuery(search.query)
+                    handleSearch(search.query, search.type, search.metadata)
+                  }
+                }}
               >
-                Clear All
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {recentSearches.map((search) => (
-                <div
-                  key={search.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-card hover:bg-muted/50 cursor-pointer group transition-colors border border-border"
-                  onClick={() => {
-                    if (search.query) {
-                      setQuery(search.query)
-                      handleSearch(search.query, search.type, search.metadata)
-                    }
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                      {search.type === "text" ? (
-                        <Clock className="h-6 w-6 text-muted-foreground" />
-                      ) : search.metadata?.image ? (
-                        <Image
-                          src={search.metadata.image || "/placeholder.svg"}
-                          alt={search.metadata?.name || search.query}
-                          width={48}
-                          height={48}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : search.type === "user" ? (
-                        generateGradientAvatar(search.query, search.metadata?.name)
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <Search className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-foreground font-medium">{search.metadata?.name || search.query}</span>
-                      <p className="text-sm text-muted-foreground capitalize">
-                        {search.type === "text" ? "Search" : search.type}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                    {search.type === "text" ? (
+                      <Clock className="h-6 w-6 text-muted-foreground" />
+                    ) : search.metadata?.image ? (
+                      <Image
+                        src={search.metadata.image || "/placeholder.svg"}
+                        alt={search.metadata?.name || search.query}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : search.type === "user" ? (
+                      generateGradientAvatar(search.query, search.metadata?.name)
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <Search className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      removeRecentSearch(search.id)
-                    }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted rounded-lg"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {!query && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground mb-6">Browse by Genre</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-              {MUSIC_CATEGORIES.map((category) => (
-                <div
-                  key={category.id}
-                  onClick={() => handleCategoryClick(category)}
-                  className="relative aspect-square rounded-xl cursor-pointer overflow-hidden bg-card"
-                >
-                  <Image
-                    src={category.imageUrl || "/placeholder.svg?height=300&width=300&query=music genre cover"}
-                    alt={category.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white font-bold text-lg leading-tight drop-shadow-lg">{category.name}</h3>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {query && (
-          <div className="mb-8">
-            {isSearching ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="h-8 w-8 text-muted-foreground animate-pulse" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">Searching...</h3>
-                <p className="text-muted-foreground">Finding the best results for you</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {users.length > 0 && (
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Users</h3>
-                    <div className="space-y-3">
-                      {users.slice(0, 3).map((user) => (
-                        <div
-                          key={user.id}
-                          className="flex items-center justify-between p-4 rounded-lg bg-card hover:bg-muted/50 cursor-pointer transition-colors border border-border"
-                          onClick={() => {
-                            if (user.username) {
-                              handleSearch(user.username, "user", {
-                                name: user.display_name || user.username,
-                                image: user.avatar_url,
-                              })
-                              router.push(`/user/${user.username}`)
-                            }
-                          }}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full overflow-hidden bg-muted">
-                              {user.avatar_url ? (
-                                <Image
-                                  src={user.avatar_url || "/placeholder.svg"}
-                                  alt={`${user.display_name || user.username} profile picture`}
-                                  width={48}
-                                  height={48}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                generateGradientAvatar(user.username, user.display_name)
-                              )}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-foreground">
-                                  {user.display_name || user.username}
-                                </span>
-                                {user.role === "artist" && (
-                                  <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full">
-                                    Artist
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground">@{user.username}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {deezerContent.artists.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Artists</h3>
-                    <div className="space-y-3">
-                      {deezerContent.artists.slice(0, 3).map((artist) => (
-                        <div
-                          key={artist.id}
-                          className="flex items-center gap-3 p-4 rounded-lg bg-card hover:bg-muted/50 cursor-pointer transition-colors border border-border"
-                          onClick={() => {
-                            if (artist.name) {
-                              handleSearch(artist.name, "artist", {
-                                name: artist.name,
-                                image: artist.picture_medium,
-                              })
-                              router.push(`/artist/${artist.id}`)
-                            }
-                          }}
-                        >
-                          <div className="w-12 h-12 rounded-full overflow-hidden bg-muted">
-                            <Image
-                              src={artist.picture_medium || "/placeholder.svg?height=48&width=48"}
-                              alt={`${artist.name} artist photo`}
-                              width={48}
-                              height={48}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="font-semibold text-foreground truncate block">{artist.name}</span>
-                            <p className="text-sm text-muted-foreground">
-                              Artist • {artist.nb_fan?.toLocaleString() || 0} fans
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {deezerContent.songs.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Songs</h3>
-                    <div className="space-y-3">
-                      {deezerContent.songs.slice(0, 3).map((song) => (
-                        <div
-                          key={song.id}
-                          className="flex items-center gap-3 p-4 rounded-lg bg-card hover:bg-muted/50 cursor-pointer transition-colors border border-border"
-                          onClick={() => {
-                            if (song.title) {
-                              handleSearch(song.title, "song", {
-                                name: `${song.title} - ${song.artist.name}`,
-                                image: song.album.cover_medium,
-                              })
-                              router.push(`/song/${song.id}`)
-                            }
-                          }}
-                        >
-                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted">
-                            <Image
-                              src={song.album.cover_medium || "/placeholder.svg?height=48&width=48"}
-                              alt={`${song.title} by ${song.artist.name} album cover`}
-                              width={48}
-                              height={48}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="font-semibold text-foreground truncate block">{song.title}</span>
-                            <p className="text-sm text-muted-foreground truncate">{song.artist.name}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {users.length === 0 && deezerContent.songs.length === 0 && deezerContent.artists.length === 0 && (
-                  <div className="text-center py-16">
-                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Search className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-foreground mb-2">No results found</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto">
-                      We couldn't find anything for "{query}". Try searching with different keywords.
+                    <span className="text-foreground font-medium">{search.metadata?.name || search.query}</span>
+                    <p className="text-sm text-muted-foreground capitalize">
+                      {search.type === "text" ? "Search" : search.type}
                     </p>
                   </div>
-                )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeRecentSearch(search.id)
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted rounded-lg"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </Button>
               </div>
-            )}
+            ))}
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+
+      {!query && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-foreground mb-6">Browse by Genre</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+            {MUSIC_CATEGORIES.map((category) => (
+              <div
+                key={category.id}
+                onClick={() => handleCategoryClick(category)}
+                className="relative aspect-square rounded-xl cursor-pointer overflow-hidden bg-card"
+              >
+                <Image
+                  src={category.imageUrl || "/placeholder.svg?height=300&width=300&query=music genre cover"}
+                  alt={category.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 className="text-white font-bold text-lg leading-tight drop-shadow-lg">{category.name}</h3>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {query && (
+        <div className="mb-8">
+          {isSearching ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="h-8 w-8 text-muted-foreground animate-pulse" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">Searching...</h3>
+              <p className="text-muted-foreground">Finding the best results for you</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {users.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Users</h3>
+                  <div className="space-y-3">
+                    {users.slice(0, 3).map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-card hover:bg-muted/50 cursor-pointer transition-colors border border-border"
+                        onClick={() => {
+                          if (user.username) {
+                            handleSearch(user.username, "user", {
+                              name: user.display_name || user.username,
+                              image: user.avatar_url,
+                            })
+                            router.push(`/user/${user.username}`)
+                          }
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full overflow-hidden bg-muted">
+                            {user.avatar_url ? (
+                              <Image
+                                src={user.avatar_url || "/placeholder.svg"}
+                                alt={`${user.display_name || user.username} profile picture`}
+                                width={48}
+                                height={48}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              generateGradientAvatar(user.username, user.display_name)
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-foreground">
+                                {user.display_name || user.username}
+                              </span>
+                              {user.role === "artist" && (
+                                <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full">
+                                  Artist
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">@{user.username}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {deezerContent.artists.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Artists</h3>
+                  <div className="space-y-3">
+                    {deezerContent.artists.slice(0, 3).map((artist) => (
+                      <div
+                        key={artist.id}
+                        className="flex items-center gap-3 p-4 rounded-lg bg-card hover:bg-muted/50 cursor-pointer transition-colors border border-border"
+                        onClick={() => {
+                          if (artist.name) {
+                            handleSearch(artist.name, "artist", {
+                              name: artist.name,
+                              image: artist.picture_medium,
+                            })
+                            router.push(`/artist/${artist.id}`)
+                          }
+                        }}
+                      >
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-muted">
+                          <Image
+                            src={artist.picture_medium || "/placeholder.svg?height=48&width=48"}
+                            alt={`${artist.name} artist photo`}
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold text-foreground truncate block">{artist.name}</span>
+                          <p className="text-sm text-muted-foreground">
+                            Artist • {artist.nb_fan?.toLocaleString() || 0} fans
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {deezerContent.songs.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Songs</h3>
+                  <div className="space-y-3">
+                    {deezerContent.songs.slice(0, 3).map((song) => (
+                      <div
+                        key={song.id}
+                        className="flex items-center gap-3 p-4 rounded-lg bg-card hover:bg-muted/50 cursor-pointer transition-colors border border-border"
+                        onClick={() => {
+                          if (song.title) {
+                            handleSearch(song.title, "song", {
+                              name: `${song.title} - ${song.artist.name}`,
+                              image: song.album.cover_medium,
+                            })
+                            router.push(`/song/${song.id}`)
+                          }
+                        }}
+                      >
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted">
+                          <Image
+                            src={song.album.cover_medium || "/placeholder.svg?height=48&width=48"}
+                            alt={`${song.title} by ${song.artist.name} album cover`}
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold text-foreground truncate block">{song.title}</span>
+                          <p className="text-sm text-muted-foreground truncate">{song.artist.name}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {users.length === 0 && deezerContent.songs.length === 0 && deezerContent.artists.length === 0 && (
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">No results found</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    We couldn't find anything for "{query}". Try searching with different keywords.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </PageContainer>
   )
 }

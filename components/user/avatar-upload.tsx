@@ -1,12 +1,12 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { GradientAvatar } from "@/components/user/gradient-avatar"
-import { Camera, Upload, X } from "lucide-react"
+import { Camera, Upload, X, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface AvatarUploadProps {
   userId: string
@@ -15,31 +15,72 @@ interface AvatarUploadProps {
   className?: string
 }
 
+const AVATAR_SIZE = 512
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+
+/**
+ * Enhanced with strict 1:1 ratio validation and better error handling
+ * Ensures square avatars at 512x512px minimum for quality
+ */
 export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, className }: AvatarUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentAvatarUrl || null)
   const [isDragging, setIsDragging] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileSelect = (file: File | null) => {
-    if (file) {
-      // Validate file type
+  const validateImage = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
       if (!file.type.startsWith("image/")) {
-        alert("Please select an image file")
+        setError("Please select a valid image file (JPG, PNG, WebP)")
+        resolve(false)
         return
       }
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size must be less than 5MB")
+      if (file.size > MAX_FILE_SIZE) {
+        setError("File size must be less than 5MB")
+        resolve(false)
         return
       }
 
-      // Create preview URL
+      const img = new Image()
+      img.onload = () => {
+        const aspectRatio = img.width / img.height
+        const isSquare = Math.abs(aspectRatio - 1) < 0.01 // Allow tiny tolerance
+
+        if (!isSquare) {
+          setError("Avatar must be square (1:1 aspect ratio)")
+          resolve(false)
+          return
+        }
+
+        if (img.width < 256) {
+          setError(`Avatar width must be at least 256px (recommended ${AVATAR_SIZE}px)`)
+          resolve(false)
+          return
+        }
+
+        setError(null)
+        resolve(true)
+      }
+      img.onerror = () => {
+        setError("Could not read image file")
+        resolve(false)
+      }
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  const handleFileSelect = async (file: File | null) => {
+    if (file) {
+      const isValid = await validateImage(file)
+      if (!isValid) return
+
       const url = URL.createObjectURL(file)
       setPreviewUrl(url)
       onImageSelect(file)
     } else {
       setPreviewUrl(currentAvatarUrl || null)
+      setError(null)
       onImageSelect(null)
     }
   }
@@ -47,7 +88,6 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, classNam
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-
     const files = Array.from(e.dataTransfer.files)
     if (files.length > 0) {
       handleFileSelect(files[0])
@@ -69,6 +109,7 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, classNam
       URL.revokeObjectURL(previewUrl)
     }
     setPreviewUrl(null)
+    setError(null)
     onImageSelect(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
@@ -79,8 +120,12 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, classNam
     <div className={cn("flex flex-col items-center gap-3", className)}>
       <div
         className={cn(
-          "relative group cursor-pointer rounded-full overflow-hidden border-2 border-dashed transition-all w-21 h-21", // Fixed size 84x84px
-          isDragging ? "border-primary bg-primary/10" : "border-muted-foreground/25 hover:border-primary/50",
+          "relative group cursor-pointer rounded-full overflow-hidden border-2 border-dashed transition-all w-24 h-24",
+          isDragging
+            ? "border-foreground bg-muted/50 scale-105"
+            : previewUrl
+              ? "border-border hover:border-foreground/50"
+              : "border-muted-foreground/30 hover:border-foreground/50 bg-muted/20",
         )}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -109,17 +154,25 @@ export function AvatarUpload({ userId, currentAvatarUrl, onImageSelect, classNam
             )}
           </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center">
-            <GradientAvatar userId={userId} size="lg" className="w-full h-full" /> {/* Use lg for GradientAvatar */}
+          <>
+            <GradientAvatar userId={userId} size="lg" className="w-full h-full" />
             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Upload className="w-5 h-5 text-white" />
             </div>
-          </div>
+          </>
         )}
       </div>
 
+      {error && (
+        <Alert variant="destructive" className="py-2 w-full">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="text-center">
         <p className="text-xs text-muted-foreground">{previewUrl ? "Click to change" : "Click to upload"}</p>
+        <p className="text-xs text-muted-foreground/70">Max 5MB • Square 1:1 ratio</p>
       </div>
 
       <input

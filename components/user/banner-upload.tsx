@@ -1,11 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Camera, X, ImageIcon } from "lucide-react"
+import { Camera, X, ImageIcon, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface BannerUploadProps {
   currentBannerUrl?: string | null
@@ -13,31 +13,71 @@ interface BannerUploadProps {
   className?: string
 }
 
+const BANNER_WIDTH = 1200
+const BANNER_HEIGHT = 300
+const BANNER_RATIO = BANNER_WIDTH / BANNER_HEIGHT
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
+/**
+ * Enhanced with dimension validation and better error handling
+ * Enforces 1200x300 aspect ratio with user-friendly guidance
+ */
 export function BannerUpload({ currentBannerUrl, onImageSelect, className }: BannerUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentBannerUrl || null)
   const [isDragging, setIsDragging] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileSelect = (file: File | null) => {
-    if (file) {
-      // Validate file type
+  const validateImage = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
       if (!file.type.startsWith("image/")) {
-        alert("Please select an image file")
+        setError("Please select a valid image file (JPG, PNG, WebP)")
+        resolve(false)
         return
       }
 
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        alert("File size must be less than 10MB")
+      if (file.size > MAX_FILE_SIZE) {
+        setError("File size must be less than 10MB")
+        resolve(false)
         return
       }
 
-      // Create preview URL
+      const img = new Image()
+      img.onload = () => {
+        const aspectRatio = img.width / img.height
+        const tolerance = 0.05 // 5% tolerance
+        if (Math.abs(aspectRatio - BANNER_RATIO) > tolerance) {
+          setError(`Banner aspect ratio should be ${BANNER_WIDTH}:${BANNER_HEIGHT} (${BANNER_RATIO.toFixed(2)}:1)`)
+          resolve(false)
+          return
+        }
+        if (img.width < 800) {
+          setError(`Banner width must be at least 800px (recommended ${BANNER_WIDTH}px)`)
+          resolve(false)
+          return
+        }
+        setError(null)
+        resolve(true)
+      }
+      img.onerror = () => {
+        setError("Could not read image file")
+        resolve(false)
+      }
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  const handleFileSelect = async (file: File | null) => {
+    if (file) {
+      const isValid = await validateImage(file)
+      if (!isValid) return
+
       const url = URL.createObjectURL(file)
       setPreviewUrl(url)
       onImageSelect(file)
     } else {
       setPreviewUrl(currentBannerUrl || null)
+      setError(null)
       onImageSelect(null)
     }
   }
@@ -45,7 +85,6 @@ export function BannerUpload({ currentBannerUrl, onImageSelect, className }: Ban
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-
     const files = Array.from(e.dataTransfer.files)
     if (files.length > 0) {
       handleFileSelect(files[0])
@@ -67,6 +106,7 @@ export function BannerUpload({ currentBannerUrl, onImageSelect, className }: Ban
       URL.revokeObjectURL(previewUrl)
     }
     setPreviewUrl(null)
+    setError(null)
     onImageSelect(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
@@ -74,15 +114,15 @@ export function BannerUpload({ currentBannerUrl, onImageSelect, className }: Ban
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-3", className)}>
       <div
         className={cn(
-          "relative group cursor-pointer rounded-xl overflow-hidden border-2 border-dashed transition-all w-full h-32",
+          "relative group cursor-pointer rounded-lg overflow-hidden border-2 border-dashed transition-all w-full aspect-[4/1]",
           isDragging
-            ? "border-primary bg-primary/10"
+            ? "border-foreground bg-muted/50"
             : previewUrl
-              ? "border-border hover:border-primary/50"
-              : "border-muted-foreground/25 hover:border-primary/50 bg-muted/30",
+              ? "border-border hover:border-foreground/50"
+              : "border-muted-foreground/30 hover:border-foreground/50 bg-muted/20",
         )}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -120,12 +160,23 @@ export function BannerUpload({ currentBannerUrl, onImageSelect, className }: Ban
                 <ImageIcon className="w-6 h-6" />
               </div>
               <div className="text-center">
-                <div className="text-sm font-medium">Click to upload banner</div>
-                <div className="text-xs">Recommended: 1200x300px</div>
+                <div className="text-sm font-medium">Drag or click to upload banner</div>
+                <div className="text-xs text-muted-foreground/70">Recommended: 1200×300px</div>
               </div>
             </div>
           </div>
         )}
+      </div>
+
+      {error && (
+        <Alert variant="destructive" className="py-2">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="text-xs text-muted-foreground/70 space-y-1">
+        <p>Maximum 10MB • Aspect ratio 4:1 (1200×300px ideal)</p>
       </div>
 
       <input

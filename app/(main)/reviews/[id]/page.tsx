@@ -10,6 +10,8 @@ import { ArrowLeft, Play, ExternalLink } from "lucide-react"
 import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 import Link from "next/link"
 import Image from "next/image"
+import { PageContainer } from "@/components/layout/page-container"
+import { AudioPlayer } from "@/components/player/audio-player"
 
 export default function ReviewDetailPage() {
   const params = useParams()
@@ -30,14 +32,14 @@ export default function ReviewDetailPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Review not found</h1>
+      <PageContainer>
+        <div className="text-center py-16">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Review not found</h1>
           <Button asChild>
             <Link href="/reviews">Back to Reviews</Link>
           </Button>
         </div>
-      </div>
+      </PageContainer>
     )
   }
 
@@ -47,7 +49,7 @@ export default function ReviewDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <PageContainer maxWidth="lg">
         {/* Back Button */}
         <div className="mb-6">
           <Button variant="ghost" asChild className="gap-2">
@@ -89,7 +91,7 @@ export default function ReviewDetailPage() {
           />
         </div>
 
-        {/* Song Preview Player */}
+        {/* Song Preview Player - Using new AudioPlayer with CORS fix */}
         {review.song_preview_url && (
           <div className="mb-8">
             <div className="bg-card rounded-xl border border-border p-6">
@@ -113,10 +115,7 @@ export default function ReviewDetailPage() {
                 <div className="flex-1">
                   <h4 className="font-medium text-foreground">{review.song_title}</h4>
                   <p className="text-sm text-muted-foreground">{review.song_artist}</p>
-                  <audio controls className="mt-2 w-full">
-                    <source src={review.song_preview_url} type="audio/mpeg" />
-                    Your browser does not support the audio element.
-                  </audio>
+                  <AudioPlayer src={review.song_preview_url} className="mt-3" />
                 </div>
                 {review.song_deezer_url && (
                   <Button variant="outline" asChild>
@@ -166,7 +165,7 @@ export default function ReviewDetailPage() {
             </div>
           </div>
         )}
-      </div>
+      </PageContainer>
     </div>
   )
 }
