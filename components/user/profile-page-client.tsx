@@ -37,6 +37,7 @@ import {
 } from "lucide-react"
 import { FaSpotify } from "react-icons/fa"
 import React from "react"
+import { ImageIcon } from "lucide-react"
 
 interface ProfilePageClientProps {
   initialProfileData: {
@@ -70,14 +71,14 @@ interface ProfilePageClientProps {
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-background">
       <div className="relative">
-        <Skeleton className="h-64 w-full bg-zinc-800" />
+        <Skeleton className="h-64 w-full bg-muted" />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <Skeleton className="w-32 h-32 rounded-full bg-zinc-700 mx-auto" />
-            <Skeleton className="h-8 w-48 bg-zinc-700 mx-auto" />
-            <Skeleton className="h-4 w-32 bg-zinc-700 mx-auto" />
+            <Skeleton className="w-32 h-32 rounded-full bg-card mx-auto" />
+            <Skeleton className="h-8 w-48 bg-card mx-auto" />
+            <Skeleton className="h-4 w-32 bg-card mx-auto" />
           </div>
         </div>
       </div>
@@ -172,9 +173,9 @@ export function ProfilePageClient({
   ]
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="relative">
-        <div className="h-56 md:h-64 lg:h-72 relative overflow-hidden">
+        <div className="h-64 md:h-80 lg:h-96 relative overflow-hidden bg-gradient-to-b from-muted to-muted/50">
           {profile.banner_url ? (
             <div className="relative w-full h-full">
               <Image
@@ -183,24 +184,27 @@ export function ProfilePageClient({
                 width={1200}
                 height={300}
                 className="w-full h-full object-cover object-center"
-                style={{
-                  objectPosition: "center 30%",
-                }}
+                priority
               />
-              <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/20" />
+              {/* Subtle overlay instead of heavy gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/40 to-transparent" />
             </div>
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-zinc-800 via-zinc-900 to-black" />
+            <div className="w-full h-full bg-gradient-to-br from-muted via-muted/80 to-background/50 flex items-center justify-center">
+              <div className="text-center">
+                <ImageIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground/40">No banner yet</p>
+              </div>
+            </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/100 via-black/85 to-black/60" />
         </div>
 
-        <div className="relative -mt-20 md:-mt-24">
+        <div className="relative -mt-28 md:-mt-32 lg:-mt-40">
           <div className="max-w-6xl mx-auto px-4 md:px-6">
             <div className="flex flex-col md:flex-row md:items-end gap-6">
               {/* Avatar */}
               <div className="relative">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-black bg-zinc-900 shadow-2xl">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-background bg-card shadow-2xl">
                   {profile.avatar_url ? (
                     <Avatar className="w-full h-full">
                       <AvatarImage
@@ -222,7 +226,7 @@ export function ProfilePageClient({
               <div className="flex-1 md:pb-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{displayName}</h1>
+                    <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">{displayName}</h1>
                     {profile.is_verified && (
                       <div className="bg-blue-500 rounded-full p-1.5">
                         <Verified className="h-5 w-5 text-white fill-white" />
@@ -230,17 +234,17 @@ export function ProfilePageClient({
                     )}
                     {profile.role === "artist" && (
                       <div className="bg-white/10 backdrop-blur-sm rounded-full p-2">
-                        <Mic className="h-4 w-4 text-white" />
+                        <Mic className="h-4 w-4 text-foreground" />
                       </div>
                     )}
                     {profile.role === "listener" && (
                       <div className="bg-white/10 backdrop-blur-sm rounded-full p-2">
-                        <Headphones className="h-4 w-4 text-white" />
+                        <Headphones className="h-4 w-4 text-foreground" />
                       </div>
                     )}
                   </div>
 
-                  {showUsername && <p className="text-zinc-300 text-lg">@{profile.username}</p>}
+                  {showUsername && <p className="text-muted-foreground text-lg">@{profile.username}</p>}
 
                   <div className="flex items-center gap-6">
                     <FollowStats
@@ -253,8 +257,8 @@ export function ProfilePageClient({
                     />
 
                     <div className="flex items-center gap-1 text-sm">
-                      <span className="font-semibold text-white">{reviews.length}</span>
-                      <span className="text-zinc-400">reviews</span>
+                      <span className="font-semibold text-foreground">{reviews.length}</span>
+                      <span className="text-muted-foreground">reviews</span>
                     </div>
                   </div>
                 </div>
@@ -266,27 +270,27 @@ export function ProfilePageClient({
                   <>
                     <Button
                       asChild
-                      className="bg-white text-black hover:bg-zinc-200 font-medium px-6 py-2 rounded-full transition-all"
+                      className="bg-background text-foreground hover:bg-muted font-medium px-6 py-2 rounded-full transition-all"
                     >
                       <Link href="/settings">Edit Profile</Link>
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button className="bg-zinc-800 hover:bg-zinc-700 text-white rounded-full w-10 h-10">
+                        <Button className="bg-background hover:bg-muted text-foreground rounded-full w-10 h-10">
                           <MoreHorizontal className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700 rounded-xl w-56">
+                      <DropdownMenuContent align="end" className="bg-background border-muted/50 rounded-xl w-56">
                         <DropdownMenuItem
                           onClick={handleCopyProfileLink}
-                          className="text-white hover:bg-zinc-800 cursor-pointer rounded-lg"
+                          className="text-foreground hover:bg-muted cursor-pointer rounded-lg"
                         >
                           <Share className="h-4 w-4 mr-2" />
                           Share profile link
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={handleAccountSettings}
-                          className="text-white hover:bg-zinc-800 cursor-pointer rounded-lg"
+                          className="text-foreground hover:bg-muted cursor-pointer rounded-lg"
                         >
                           <Users className="h-4 w-4 mr-2" />
                           Account settings
@@ -304,28 +308,28 @@ export function ProfilePageClient({
                     />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button className="bg-zinc-800 hover:bg-zinc-700 text-white rounded-full w-10 h-10">
+                        <Button className="bg-background hover:bg-muted text-foreground rounded-full w-10 h-10">
                           <MoreHorizontal className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700 rounded-xl w-56">
+                      <DropdownMenuContent align="end" className="bg-background border-muted/50 rounded-xl w-56">
                         <DropdownMenuItem
                           onClick={handleCopyProfileLink}
-                          className="text-white hover:bg-zinc-800 cursor-pointer rounded-lg"
+                          className="text-foreground hover:bg-muted cursor-pointer rounded-lg"
                         >
                           <LinkIcon className="h-4 w-4 mr-2" />
                           Copy profile link
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={handleBlock}
-                          className="text-white hover:bg-zinc-800 cursor-pointer rounded-lg"
+                          className="text-foreground hover:bg-muted cursor-pointer rounded-lg"
                         >
                           <Shield className="h-4 w-4 mr-2" />
                           Block
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={handleReport}
-                          className="text-white hover:bg-zinc-800 cursor-pointer rounded-lg"
+                          className="text-foreground hover:bg-muted cursor-pointer rounded-lg"
                         >
                           <Flag className="h-4 w-4 mr-2" />
                           Report account
@@ -345,10 +349,10 @@ export function ProfilePageClient({
           <div className="min-w-0">
             {/* Bio and Info Section */}
             {(profile.bio || profile.location || socialLinks.length > 0) && (
-              <div className="mb-8 p-6 bg-zinc-900/50 backdrop-blur-sm rounded-2xl border border-zinc-800/50">
-                {profile.bio && <p className="text-white text-base leading-relaxed mb-4">{profile.bio}</p>}
+              <div className="mb-8 p-6 bg-card/50 backdrop-blur-sm rounded-2xl border border-card/50">
+                {profile.bio && <p className="text-foreground text-base leading-relaxed mb-4">{profile.bio}</p>}
 
-                <div className="flex flex-wrap items-center gap-4 text-zinc-400 text-sm mb-4">
+                <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm mb-4">
                   {profile.location && (
                     <div className="flex items-center gap-1.5">
                       <MapPin className="h-4 w-4" />
@@ -371,7 +375,7 @@ export function ProfilePageClient({
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-3 py-2 bg-zinc-800/50 hover:bg-zinc-700/50 rounded-full transition-colors text-sm text-zinc-300 hover:text-white"
+                          className="flex items-center gap-2 px-3 py-2 bg-card/50 hover:bg-card/75 rounded-full transition-colors text-sm text-muted-foreground hover:text-foreground"
                         >
                           <IconComponent className="h-4 w-4" />
                           <span>{link.label}</span>
@@ -385,19 +389,19 @@ export function ProfilePageClient({
 
             {/* Tabs Section */}
             <Tabs defaultValue="reviews" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800/50 rounded-xl p-1 mb-8">
+              <TabsList className="grid w-full grid-cols-4 bg-card/80 backdrop-blur-sm border border-card/50 rounded-xl p-1 mb-8">
                 {tabs.map((tab) => {
                   const Icon = tab.icon
                   return (
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all rounded-lg data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm text-zinc-300 hover:text-white hover:bg-zinc-800/50"
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground hover:bg-card/75"
                     >
                       <Icon className="h-4 w-4" />
                       <span className="hidden sm:inline">{tab.label}</span>
                       {tab.count && tab.count > 0 && (
-                        <span className="hidden sm:inline text-xs bg-zinc-700 data-[state=active]:bg-zinc-200 data-[state=active]:text-zinc-800 text-zinc-300 px-2 py-1 rounded-full ml-1">
+                        <span className="hidden sm:inline text-xs bg-card/75 data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground px-2 py-1 rounded-full ml-1">
                           {tab.count}
                         </span>
                       )}
@@ -410,13 +414,13 @@ export function ProfilePageClient({
                 {reviews.length > 0 ? (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-lg font-semibold text-white">Reviews ({reviews.length})</h2>
+                      <h2 className="text-lg font-semibold text-foreground">Reviews ({reviews.length})</h2>
                       <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setReviewViewMode("grid")}
-                          className={`p-2 rounded-lg transition-colors ${reviewViewMode === "grid" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"}`}
+                          className={`p-2 rounded-lg transition-colors ${reviewViewMode === "grid" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-card/75"}`}
                         >
                           <Grid3X3 className="h-4 w-4" />
                         </Button>
@@ -424,7 +428,7 @@ export function ProfilePageClient({
                           variant="ghost"
                           size="sm"
                           onClick={() => setReviewViewMode("list")}
-                          className={`p-2 rounded-lg transition-colors ${reviewViewMode === "list" ? "bg-zinc-800 text-white" : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"}`}
+                          className={`p-2 rounded-lg transition-colors ${reviewViewMode === "list" ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-card/75"}`}
                         >
                           <List className="h-4 w-4" />
                         </Button>
@@ -435,7 +439,7 @@ export function ProfilePageClient({
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {reviews.map((review) => (
                           <Link key={review.id} href={`/reviews/${review.id}`} className="group cursor-pointer">
-                            <div className="aspect-square bg-zinc-900 rounded-xl overflow-hidden mb-3 relative">
+                            <div className="aspect-square bg-card rounded-xl overflow-hidden mb-3 relative">
                               {review.song_cover_url ? (
                                 <Image
                                   src={review.song_cover_url || "/placeholder.svg"}
@@ -445,13 +449,13 @@ export function ProfilePageClient({
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
                               ) : (
-                                <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                                  <Music className="h-8 w-8 text-zinc-600" />
+                                <div className="w-full h-full bg-card flex items-center justify-center">
+                                  <Music className="h-8 w-8 text-muted-foreground" />
                                 </div>
                               )}
 
                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                                <Play className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <Play className="h-6 w-6 text-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
 
                               <div className="absolute bottom-2 left-2">
@@ -460,7 +464,9 @@ export function ProfilePageClient({
                                     <Star
                                       key={star}
                                       className={`w-3 h-3 ${
-                                        star <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-zinc-600"
+                                        star <= review.rating
+                                          ? "fill-yellow-400 text-yellow-400"
+                                          : "text-muted-foreground"
                                       }`}
                                     />
                                   ))}
@@ -469,10 +475,10 @@ export function ProfilePageClient({
                             </div>
 
                             <div className="space-y-1">
-                              <h3 className="text-sm font-medium text-white truncate leading-tight">
+                              <h3 className="text-sm font-medium text-foreground truncate leading-tight">
                                 {review.song_title}
                               </h3>
-                              <p className="text-xs text-zinc-400 truncate">{review.song_artist}</p>
+                              <p className="text-xs text-muted-foreground truncate">{review.song_artist}</p>
                             </div>
                           </Link>
                         ))}
@@ -487,11 +493,11 @@ export function ProfilePageClient({
                   </div>
                 ) : (
                   <div className="text-center py-20">
-                    <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Music className="h-8 w-8 text-zinc-600" />
+                    <div className="w-16 h-16 bg-card rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Music className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">No reviews yet</h3>
-                    <p className="text-zinc-400 max-w-md mx-auto">
+                    <h3 className="text-xl font-semibold text-foreground mb-2">No reviews yet</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
                       {isOwnProfile
                         ? "Start reviewing music to share your thoughts with the community"
                         : `${displayName} hasn't written any reviews yet`}
@@ -503,13 +509,13 @@ export function ProfilePageClient({
               {tabs.slice(1).map((tab) => (
                 <TabsContent key={tab.id} value={tab.id} className="mt-0">
                   <div className="text-center py-20">
-                    <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 bg-card rounded-full flex items-center justify-center mx-auto mb-4">
                       {React.createElement(tab.icon, {
-                        className: "h-8 w-8 text-zinc-600",
+                        className: "h-8 w-8 text-muted-foreground",
                       })}
                     </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Coming Soon</h3>
-                    <p className="text-zinc-400">This section is under development</p>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">Coming Soon</h3>
+                    <p className="text-muted-foreground">This section is under development</p>
                   </div>
                 </TabsContent>
               ))}
