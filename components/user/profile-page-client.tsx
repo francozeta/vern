@@ -114,7 +114,6 @@ export function ProfilePageClient({
 
   const handleFollowChange = (isFollowing: boolean) => {
     setLocalIsFollowing(isFollowing)
-    // Update followers count immediately
     setLocalFollowersCount((prev) => (isFollowing ? prev + 1 : prev - 1))
   }
 
@@ -175,19 +174,18 @@ export function ProfilePageClient({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="relative">
-        <div className="h-64 md:h-80 lg:h-96 relative overflow-hidden bg-gradient-to-b from-muted to-muted/50">
+        <div className="h-40 sm:h-48 md:h-64 lg:h-72 xl:h-80 relative overflow-hidden bg-gradient-to-b from-muted to-muted/50">
           {profile.banner_url ? (
             <div className="relative w-full h-full">
               <Image
                 src={profile.banner_url || "/placeholder.svg"}
                 alt="Profile banner"
-                width={1200}
-                height={300}
-                className="w-full h-full object-cover object-center"
+                fill
+                sizes="100vw"
+                className="object-cover object-center"
                 priority
               />
-              {/* Subtle overlay instead of heavy gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/50 sm:from-background/80 sm:via-background/40 lg:from-background/75 lg:via-background/35 to-transparent" />
             </div>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-muted via-muted/80 to-background/50 flex items-center justify-center">
@@ -199,12 +197,12 @@ export function ProfilePageClient({
           )}
         </div>
 
-        <div className="relative -mt-28 md:-mt-32 lg:-mt-40">
-          <div className="max-w-6xl mx-auto px-4 md:px-6">
-            <div className="flex flex-col md:flex-row md:items-end gap-6">
+        <div className="relative -mt-20 sm:-mt-24 md:-mt-32 lg:-mt-40 xl:-mt-44">
+          <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end gap-4 sm:gap-6">
               {/* Avatar */}
               <div className="relative">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-background bg-card shadow-2xl">
+                <div className="w-28 sm:w-32 md:w-40 lg:w-44 h-28 sm:h-32 md:h-40 lg:h-44 rounded-full overflow-hidden border-4 border-background bg-card shadow-2xl">
                   {profile.avatar_url ? (
                     <Avatar className="w-full h-full">
                       <AvatarImage
@@ -224,29 +222,31 @@ export function ProfilePageClient({
 
               {/* Profile Info */}
               <div className="flex-1 md:pb-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">{displayName}</h1>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+                      {displayName}
+                    </h1>
                     {profile.is_verified && (
-                      <div className="bg-blue-500 rounded-full p-1.5">
-                        <Verified className="h-5 w-5 text-white fill-white" />
+                      <div className="bg-blue-500 rounded-full p-1">
+                        <Verified className="h-4 sm:h-5 w-4 sm:w-5 text-white fill-white" />
                       </div>
                     )}
                     {profile.role === "artist" && (
                       <div className="bg-white/10 backdrop-blur-sm rounded-full p-2">
-                        <Mic className="h-4 w-4 text-foreground" />
+                        <Mic className="h-3 sm:h-4 w-3 sm:w-4 text-foreground" />
                       </div>
                     )}
                     {profile.role === "listener" && (
                       <div className="bg-white/10 backdrop-blur-sm rounded-full p-2">
-                        <Headphones className="h-4 w-4 text-foreground" />
+                        <Headphones className="h-3 sm:h-4 w-3 sm:w-4 text-foreground" />
                       </div>
                     )}
                   </div>
 
-                  {showUsername && <p className="text-muted-foreground text-lg">@{profile.username}</p>}
+                  {showUsername && <p className="text-muted-foreground text-base sm:text-lg">@{profile.username}</p>}
 
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-3 sm:gap-6 text-sm sm:text-base flex-wrap">
                     <FollowStats
                       userId={profile.id}
                       followersCount={localFollowersCount}
@@ -256,7 +256,7 @@ export function ProfilePageClient({
                       following={following}
                     />
 
-                    <div className="flex items-center gap-1 text-sm">
+                    <div className="flex items-center gap-1">
                       <span className="font-semibold text-foreground">{reviews.length}</span>
                       <span className="text-muted-foreground">reviews</span>
                     </div>
@@ -265,19 +265,19 @@ export function ProfilePageClient({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 md:pb-4">
+              <div className="flex gap-2 sm:gap-3 md:pb-4">
                 {isOwnProfile ? (
                   <>
                     <Button
                       asChild
-                      className="bg-background text-foreground hover:bg-muted font-medium px-6 py-2 rounded-full transition-all"
+                      className="bg-background text-foreground hover:bg-muted font-medium px-4 sm:px-6 py-2 rounded-full transition-all text-sm sm:text-base"
                     >
                       <Link href="/settings">Edit Profile</Link>
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button className="bg-background hover:bg-muted text-foreground rounded-full w-10 h-10">
-                          <MoreHorizontal className="h-5 w-5" />
+                          <MoreHorizontal className="h-4 sm:h-5 w-4 sm:w-5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-background border-muted/50 rounded-xl w-56">
@@ -309,7 +309,7 @@ export function ProfilePageClient({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button className="bg-background hover:bg-muted text-foreground rounded-full w-10 h-10">
-                          <MoreHorizontal className="h-5 w-5" />
+                          <MoreHorizontal className="h-4 sm:h-5 w-4 sm:w-5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-background border-muted/50 rounded-xl w-56">
