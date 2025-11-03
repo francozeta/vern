@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useEffect } from "react"
 import { createBrowserSupabaseClient } from "@/lib/supabase/client"
 
 export interface ProfileData {
@@ -34,6 +35,49 @@ export interface UseProfileDataReturn {
   refetch: () => Promise<void>
 }
 
+async function fetchProfileData(
+  username: string,
+  supabase: any,
+): Promise<{
+  profile: ProfileData
+  stats: ProfileStats
+  reviews: any[]
+}> {
+  if (!username) throw new Error("Username is required")
+
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("username", username)
+    .single()
+
+  if (profileError) {
+    throw new Error("Profile not found")
+  }
+
+  const [followersResult, followingResult, reviewsResult, reviewsCountResult] = await Promise.all([
+    supabase.from("follows").select("id", { count: "exact" }).eq("following_id", profileData.id),
+    supabase.from("follows").select("id", { count: "exact" }).eq("follower_id", profileData.id),
+    supabase
+      .from("reviews")
+      .select("*")
+      .eq("user_id", profileData.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase.from("reviews").select("id", { count: "exact" }).eq("user_id", profileData.id),
+  ])
+
+  return {
+    profile: profileData,
+    stats: {
+      followersCount: followersResult.count || 0,
+      followingCount: followingResult.count || 0,
+      reviewsCount: reviewsCountResult.count || 0,
+    },
+    reviews: reviewsResult.data || [],
+  }
+}
+
 export function useProfileData(
   username: string,
   initialData?: {
@@ -42,76 +86,69 @@ export function useProfileData(
     reviews: any[]
   },
 ): UseProfileDataReturn {
-  const [profile, setProfile] = useState<ProfileData | null>(initialData?.profile || null)
-  const [stats, setStats] = useState<ProfileStats | null>(initialData?.stats || null)
-  const [reviews, setReviews] = useState<any[]>(initialData?.reviews || [])
-  const [isLoading, setIsLoading] = useState(!initialData)
-  const [error, setError] = useState<string | null>(null)
+  const supabase = createBrowserSupabaseClient()
+  const qc = useQueryClient()
+  const queryKey = ["user-profile", username]
 
-  const fetchProfileData = async () => {
-    if (!username) return
-
-    try {
-      setIsLoading(true)
-      setError(null)
-
-      const supabase = createBrowserSupabaseClient()
-
-      // Fetch profile data
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("username", username)
-        .single()
-
-      if (profileError) {
-        throw new Error("Profile not found")
-      }
-
-      setProfile(profileData)
-
-      const [followersResult, followingResult, reviewsResult, reviewsCountResult] = await Promise.all([
-        supabase.from("follows").select("id", { count: "exact" }).eq("following_id", profileData.id),
-        supabase.from("follows").select("id", { count: "exact" }).eq("follower_id", profileData.id),
-        supabase
-          .from("reviews")
-          .select("*")
-          .eq("user_id", profileData.id)
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase.from("reviews").select("id", { count: "exact" }).eq("user_id", profileData.id),
-      ])
-
-      setStats({
-        followersCount: followersResult.count || 0,
-        followingCount: followingResult.count || 0,
-        reviewsCount: reviewsCountResult.count || 0,
-      })
-
-      setReviews(reviewsResult.data || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const refetch = async () => {
-    await fetchProfileData()
-  }
+  const { data, isLoading, error } = useQuery({
+    queryKey,
+    queryFn: () => fetchProfileData(username, supabase),
+    initialData,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchOnWindowFocus: false,
+    retry: 1,
+  })
 
   useEffect(() => {
-    if (!initialData) {
-      fetchProfileData()
+    if (!data?.profile?.id) return
+
+    const channel = supabase
+      .channel(`profile-${data.profile.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${data.profile.id}`,
+        },
+        (payload: any) => {
+          if (payload.new) {
+            qc.setQueryData(queryKey, (prev: any) => ({
+              ...prev,
+              profile: payload.new,
+            }))
+          }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
     }
-  }, [username])
+  }, [data?.profile?.id, qc, supabase])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        qc.invalidateQueries({ queryKey, refetchType: "active" })
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [qc])
+
+  const refetch = async () => {
+    await qc.invalidateQueries({ queryKey })
+  }
 
   return {
-    profile,
-    stats,
-    reviews,
+    profile: data?.profile || null,
+    stats: data?.stats || null,
+    reviews: data?.reviews || [],
     isLoading,
-    error,
+    error: error ? (error instanceof Error ? error.message : "An error occurred") : null,
     refetch,
   }
 }

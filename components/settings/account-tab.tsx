@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQueryClient } from "@tanstack/react-query"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AlertCircle, Link, Instagram } from "lucide-react"
@@ -14,6 +15,7 @@ import { SettingsCard } from "@/components/settings/settings-card"
 
 interface AccountTabProps {
   profile: {
+    id: string
     website_url: string | null
     spotify_url: string | null
     instagram_url: string | null
@@ -21,6 +23,7 @@ interface AccountTabProps {
 }
 
 export function AccountTab({ profile }: AccountTabProps) {
+  const qc = useQueryClient()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
@@ -39,26 +42,39 @@ export function AccountTab({ profile }: AccountTabProps) {
     mode: "onChange",
   })
 
-  const onSubmit = async (data: AccountSettingsInput) => {
-    setIsSubmitting(true)
-    setSubmitError(null)
-    setSubmitSuccess(null)
+  const onSubmit = useCallback(
+    async (data: AccountSettingsInput) => {
+      setIsSubmitting(true)
+      setSubmitError(null)
+      setSubmitSuccess(null)
 
-    try {
-      const formData = new FormData()
-      if (data.website_url !== undefined) formData.append("website_url", data.website_url)
-      if (data.spotify_url !== undefined) formData.append("spotify_url", data.spotify_url)
-      if (data.instagram_url !== undefined) formData.append("instagram_url", data.instagram_url)
+      try {
+        const formData = new FormData()
+        if (data.website_url !== undefined) formData.append("website_url", data.website_url)
+        if (data.spotify_url !== undefined) formData.append("spotify_url", data.spotify_url)
+        if (data.instagram_url !== undefined) formData.append("instagram_url", data.instagram_url)
 
-      const response = await updateAccountSettings(formData)
-      setSubmitSuccess(response.message)
-    } catch (error) {
-      console.error("Error updating account settings:", error)
-      setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+        const response = await updateAccountSettings(formData)
+        setSubmitSuccess(response.message)
+
+        qc.setQueryData(["auth-user"], (prev: any) => ({
+          ...prev,
+          website_url: data.website_url || null,
+          spotify_url: data.spotify_url || null,
+          instagram_url: data.instagram_url || null,
+        }))
+
+        // Invalidate related queries
+        qc.invalidateQueries({ queryKey: ["user-profile"] })
+      } catch (error) {
+        console.error("Error updating account settings:", error)
+        setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred")
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [qc],
+  )
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

@@ -1,6 +1,7 @@
 "use server"
 
 import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { revalidateTag, revalidatePath } from "next/cache"
 import { profileSettingsSchema, accountSettingsSchema } from "@/lib/validations/settings"
 import { createOrUpdateArtist } from "@/app/actions/auth"
 
@@ -13,6 +14,8 @@ export async function updateProfileSettings(formData: FormData) {
   if (!user) {
     throw new Error("Not authenticated")
   }
+
+  const { data: currentProfile } = await supabase.from("profiles").select("username").eq("id", user.id).single()
 
   // Validate input
   const result = profileSettingsSchema.safeParse({
@@ -32,8 +35,8 @@ export async function updateProfileSettings(formData: FormData) {
 
   const { display_name, username, bio, role, location, avatar_url, banner_url } = result.data
 
-  // Check if username is already taken
-  if (username) {
+  // Check if username is already taken (but not by current user)
+  if (username && username !== currentProfile?.username) {
     const { data: existingUser } = await supabase
       .from("profiles")
       .select("id")
@@ -61,6 +64,10 @@ export async function updateProfileSettings(formData: FormData) {
     console.error("Profile update error:", error)
     throw new Error("Failed to update profile. Please try again.")
   }
+
+  revalidateTag(`profile-${user.id}`)
+  revalidatePath(`/user/${currentProfile?.username}`)
+  revalidatePath("/settings")
 
   if (role === "artist" || role === "both") {
     await createOrUpdateArtist(user.id, display_name || username)
@@ -112,6 +119,9 @@ export async function updateAccountSettings(formData: FormData) {
     console.error("Account settings update error:", error)
     throw new Error("Failed to update account settings. Please try again.")
   }
+
+  revalidateTag(`profile-${user.id}`)
+  revalidatePath("/settings")
 
   return { success: true, message: "Account settings updated successfully!" }
 }

@@ -1,10 +1,8 @@
-import type React from "react"
-import type { Metadata } from "next"
+"use client"
 
-export const metadata: Metadata = {
-  title: "Settings | VERN",
-  description: "Manage your VERN account settings, profile, and preferences",
-}
+import type React from "react"
+import { Suspense } from "react"
+import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 
 export default function SettingsLayout({
   children,
@@ -13,7 +11,9 @@ export default function SettingsLayout({
 }) {
   return (
     <div className="w-full">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">{children}</div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <Suspense fallback={<SettingsSkeleton />}>{children}</Suspense>
+      </div>
     </div>
   )
 }

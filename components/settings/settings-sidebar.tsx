@@ -45,6 +45,7 @@ export function SettingsSidebar({ userRole }: SettingsSidebarProps) {
                 <li key={item.href}>
                   <Link
                     href={item.href}
+                    prefetch={true}
                     className={cn(
                       "flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors duration-200",
                       isActive

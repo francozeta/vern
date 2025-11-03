@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useForm } from "react-hook-form"
-import { useQueryClient } from "@tanstack/react-query"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,8 +17,9 @@ import { uploadProfileImageClient } from "@/lib/supabase/upload"
 import { uploadBannerImageClient } from "@/lib/supabase/upload"
 import { profileSettingsSchema, type ProfileSettingsInput } from "@/lib/validations/settings"
 import { SettingsCard } from "@/components/settings/settings-card"
+import { useRouter } from "next/navigation"
 
-interface ProfileTabProps {
+interface ProfileTabClientProps {
   profile: {
     id: string
     username: string
@@ -31,21 +32,22 @@ interface ProfileTabProps {
   }
 }
 
-export function ProfileTab({ profile }: ProfileTabProps) {
+export function ProfileTabClient({ profile }: ProfileTabClientProps) {
+  const qc = useQueryClient()
+  const router = useRouter()
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [selectedBanner, setSelectedBanner] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
-  const queryClient = useQueryClient()
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
-    formState: { errors, isDirty },
+    formState: { errors, isValid, isDirty },
   } = useForm<ProfileSettingsInput>({
     resolver: zodResolver(profileSettingsSchema),
     defaultValues: {
@@ -65,74 +67,98 @@ export function ProfileTab({ profile }: ProfileTabProps) {
   const handleImageSelect = (file: File | null) => {
     setSelectedImage(file)
     if (file) {
-      setValue("avatar_url", URL.createObjectURL(file), { shouldDirty: true })
+      const previewUrl = URL.createObjectURL(file)
+      setValue("avatar_url", previewUrl, { shouldDirty: true })
+      return () => URL.revokeObjectURL(previewUrl)
     }
   }
 
   const handleBannerSelect = (file: File | null) => {
     setSelectedBanner(file)
     if (file) {
-      setValue("banner_url", URL.createObjectURL(file), { shouldDirty: true })
+      const previewUrl = URL.createObjectURL(file)
+      setValue("banner_url", previewUrl, { shouldDirty: true })
+      return () => URL.revokeObjectURL(previewUrl)
     }
   }
 
-  const onSubmit = async (data: ProfileSettingsInput) => {
-    setIsSubmitting(true)
-    setSubmitError(null)
-    setSubmitSuccess(null)
-    setUploadProgress(null)
-
-    try {
-      let finalAvatarUrl = data.avatar_url || ""
-      let finalBannerUrl = data.banner_url || ""
-
-      if (selectedImage) {
-        setUploadProgress("Uploading avatar...")
-        const { url, error: uploadError } = await uploadProfileImageClient(selectedImage, profile.id)
-        if (uploadError) {
-          throw new Error(`Avatar upload failed: ${uploadError}`)
-        }
-        finalAvatarUrl = url || ""
-      }
-
-      if (selectedBanner) {
-        setUploadProgress("Uploading banner...")
-        const { url, error: uploadError } = await uploadBannerImageClient(selectedBanner, profile.id)
-        if (uploadError) {
-          throw new Error(`Banner upload failed: ${uploadError}`)
-        }
-        finalBannerUrl = url || ""
-      }
-
-      setUploadProgress("Updating profile...")
-      const formData = new FormData()
-      if (data.display_name !== undefined) formData.append("display_name", data.display_name)
-      if (data.username !== undefined) formData.append("username", data.username)
-      if (data.bio !== undefined) formData.append("bio", data.bio)
-      if (data.role !== undefined) formData.append("role", data.role)
-      if (data.location !== undefined) formData.append("location", data.location)
-      formData.append("avatar_url", finalAvatarUrl)
-      formData.append("banner_url", finalBannerUrl)
-
-      const response = await updateProfileSettings(formData)
-
-      await queryClient.invalidateQueries({ queryKey: ["auth-user"] })
-      await queryClient.invalidateQueries({ queryKey: ["profile", profile.username] })
-
-      setSubmitSuccess(response.message)
-
-      // Redirect to profile after 1 second to show success message
-      setTimeout(() => {
-        window.location.href = `/user/${profile.username}`
-      }, 1000)
-    } catch (error) {
-      console.error("Error updating profile:", error)
-      setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred")
-    } finally {
-      setIsSubmitting(false)
+  const onSubmit = useCallback(
+    async (data: ProfileSettingsInput) => {
+      setIsSubmitting(true)
+      setSubmitError(null)
+      setSubmitSuccess(null)
       setUploadProgress(null)
-    }
-  }
+
+      try {
+        let finalAvatarUrl = data.avatar_url || ""
+        let finalBannerUrl = data.banner_url || ""
+
+        if (selectedImage) {
+          setUploadProgress("Uploading avatar...")
+          const { url, error: uploadError } = await uploadProfileImageClient(selectedImage, profile.id)
+          if (uploadError) {
+            throw new Error(`Avatar upload failed: ${uploadError}`)
+          }
+          finalAvatarUrl = url || ""
+        } else if (!data.avatar_url?.startsWith("blob:")) {
+          // Keep existing URL if no new upload and not a temporary blob
+          finalAvatarUrl = data.avatar_url || ""
+        }
+
+        if (selectedBanner) {
+          setUploadProgress("Uploading banner...")
+          const { url, error: uploadError } = await uploadBannerImageClient(selectedBanner, profile.id)
+          if (uploadError) {
+            throw new Error(`Banner upload failed: ${uploadError}`)
+          }
+          finalBannerUrl = url || ""
+        } else if (!data.banner_url?.startsWith("blob:")) {
+          // Keep existing URL if no new upload and not a temporary blob
+          finalBannerUrl = data.banner_url || ""
+        }
+
+        setUploadProgress("Updating profile...")
+        const formData = new FormData()
+        if (data.display_name !== undefined) formData.append("display_name", data.display_name)
+        if (data.username !== undefined) formData.append("username", data.username)
+        if (data.bio !== undefined) formData.append("bio", data.bio)
+        if (data.role !== undefined) formData.append("role", data.role)
+        if (data.location !== undefined) formData.append("location", data.location)
+        formData.append("avatar_url", finalAvatarUrl)
+        formData.append("banner_url", finalBannerUrl)
+
+        const response = await updateProfileSettings(formData)
+        setSubmitSuccess(response.message)
+
+        qc.setQueryData(["auth-user"], (prev: any) => ({
+          ...prev,
+          display_name: data.display_name || null,
+          username: data.username,
+          bio: data.bio || null,
+          role: data.role,
+          location: data.location || null,
+          avatar_url: finalAvatarUrl || null,
+          banner_url: finalBannerUrl || null,
+        }))
+
+        // Clear temp files and invalidate queries
+        setSelectedImage(null)
+        setSelectedBanner(null)
+        qc.invalidateQueries({ queryKey: ["user-profile"] })
+
+        setTimeout(() => {
+          router.push(`/user/${profile.username}`)
+        }, 1500)
+      } catch (error) {
+        console.error("Error updating profile:", error)
+        setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred")
+      } finally {
+        setIsSubmitting(false)
+        setUploadProgress(null)
+      }
+    },
+    [profile.id, profile.username, qc, router, selectedImage, selectedBanner],
+  )
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

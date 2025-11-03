@@ -200,7 +200,6 @@ export function ProfilePageClient({
         <div className="relative -mt-20 sm:-mt-24 md:-mt-32 lg:-mt-40 xl:-mt-44">
           <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end gap-4 sm:gap-6">
-              {/* Avatar */}
               <div className="relative">
                 <div className="w-28 sm:w-32 md:w-40 lg:w-44 h-28 sm:h-32 md:h-40 lg:h-44 rounded-full overflow-hidden border-4 border-background bg-card shadow-2xl">
                   {profile.avatar_url ? (
@@ -220,7 +219,6 @@ export function ProfilePageClient({
                 </div>
               </div>
 
-              {/* Profile Info */}
               <div className="flex-1 md:pb-4">
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -264,7 +262,6 @@ export function ProfilePageClient({
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-2 sm:gap-3 md:pb-4">
                 {isOwnProfile ? (
                   <>
@@ -347,7 +344,6 @@ export function ProfilePageClient({
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
           <div className="min-w-0">
-            {/* Bio and Info Section */}
             {(profile.bio || profile.location || socialLinks.length > 0) && (
               <div className="mb-8 p-6 bg-card/50 backdrop-blur-sm rounded-2xl border border-card/50">
                 {profile.bio && <p className="text-foreground text-base leading-relaxed mb-4">{profile.bio}</p>}
@@ -387,7 +383,6 @@ export function ProfilePageClient({
               </div>
             )}
 
-            {/* Tabs Section */}
             <Tabs defaultValue="reviews" className="w-full">
               <TabsList className="grid w-full grid-cols-4 bg-card/80 backdrop-blur-sm border border-card/50 rounded-xl p-1 mb-8">
                 {tabs.map((tab) => {
@@ -522,7 +517,6 @@ export function ProfilePageClient({
             </Tabs>
           </div>
 
-          {/* Sidebar */}
           <div className="hidden lg:block">
             <div className="sticky top-6 space-y-6">
               <SuggestedUsers currentUserId={currentUserId} />

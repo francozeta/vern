@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 }
 
 interface Profile {
+  id: string
   website_url: string | null
   spotify_url: string | null
   instagram_url: string | null
@@ -28,7 +29,7 @@ async function AccountContent() {
 
   const { data: profileData, error } = await supabase
     .from("profiles")
-    .select("website_url, spotify_url, instagram_url")
+    .select("id, website_url, spotify_url, instagram_url")
     .eq("id", user.id)
     .single()
 

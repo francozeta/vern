@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { PlayerProvider } from "@/components/providers/player-provider"
 import { QueryProvider } from "@/components/providers/query-provider"
+import { AuthUserProvider } from "@/components/providers/auth-user-provider"
 
 export const metadata: Metadata = {
   title: "VERN - Music Platform",
@@ -27,7 +28,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.className} antialiased dark`}>
         <QueryProvider>
-          <PlayerProvider>{children}</PlayerProvider>
+          <AuthUserProvider>
+            <PlayerProvider>{children}</PlayerProvider>
+          </AuthUserProvider>
         </QueryProvider>
         <Analytics />
       </body>

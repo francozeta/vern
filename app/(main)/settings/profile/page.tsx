@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import type { Metadata } from "next"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { ProfileTab } from "@/components/settings/profile-tab"
+import { ProfileTabClient } from "@/components/settings/profile-tab-client"
 import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 
 export const metadata: Metadata = {
@@ -48,7 +48,7 @@ async function ProfileContent() {
         <h1 className="text-3xl font-bold">Profile</h1>
         <p className="text-muted-foreground mt-2">Manage your profile information and appearance</p>
       </div>
-      <ProfileTab profile={profileData as Profile} />
+      <ProfileTabClient profile={profileData} />
     </div>
   )
 }
