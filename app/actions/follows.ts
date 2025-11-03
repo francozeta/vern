@@ -42,15 +42,8 @@ export async function followUser(followingId: string) {
     return { error: "Failed to follow user" }
   }
 
-  // Get the target user's username for revalidation
-  const { data: targetUser } = await supabase.from("profiles").select("username").eq("id", followingId).single()
-
-  // Revalidate relevant paths
   revalidatePath("/")
   revalidatePath("/reviews")
-  if (targetUser?.username) {
-    revalidatePath(`/user/${targetUser.username}`)
-  }
 
   return { success: true }
 }
@@ -75,15 +68,8 @@ export async function unfollowUser(followingId: string) {
     return { error: "Failed to unfollow user" }
   }
 
-  // Get the target user's username for revalidation
-  const { data: targetUser } = await supabase.from("profiles").select("username").eq("id", followingId).single()
-
-  // Revalidate relevant paths
   revalidatePath("/")
   revalidatePath("/reviews")
-  if (targetUser?.username) {
-    revalidatePath(`/user/${targetUser.username}`)
-  }
 
   return { success: true }
 }
@@ -120,7 +106,6 @@ export async function checkFollowStatus(currentUserId: string, targetUserId: str
     .single()
 
   if (error && error.code !== "PGRST116") {
-    // PGRST116 is "not found" error
     console.error("Check follow status error:", error)
     return { success: false, isFollowing: false }
   }
@@ -192,25 +177,27 @@ export async function getFollowing(userId: string, limit = 20, offset = 0) {
 export async function getSuggestedUsers(currentUserId: string, limit = 5) {
   const supabase = await createServerSupabaseClient()
 
+  const { data: followingData } = await supabase.from("follows").select("following_id").eq("follower_id", currentUserId)
+
+  const followingIds = followingData?.map((f) => f.following_id) || []
+
   // Get users that the current user is not following
-  const { data: suggestedUsers, error } = await supabase
+  let query = supabase
     .from("profiles")
     .select("id, username, display_name, avatar_url, is_verified, role")
     .neq("id", currentUserId)
-    .limit(limit * 2) // Get more to filter out already followed users
+    .limit(limit)
+
+  if (followingIds.length > 0) {
+    query = query.not("id", "in", `(${followingIds.join(",")})`)
+  }
+
+  const { data: suggestedUsers, error } = await query
 
   if (error) {
     console.error("Get suggested users error:", error)
     return { users: [] }
   }
 
-  // Get users that current user is already following
-  const { data: followingData } = await supabase.from("follows").select("following_id").eq("follower_id", currentUserId)
-
-  const followingIds = followingData?.map((f) => f.following_id) || []
-
-  // Filter out already followed users
-  const filtered = suggestedUsers?.filter((user) => !followingIds.includes(user.id)).slice(0, limit) || []
-
-  return { users: filtered }
+  return { users: suggestedUsers || [] }
 }

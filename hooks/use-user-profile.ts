@@ -22,14 +22,39 @@ async function fetchUserProfile(username: string, currentUserId: string | null):
     throw new Error("Profile not found")
   }
 
-  const [reviewsResult, followStatusResult, followCountsResult, followersResult, followingResult] = await Promise.all([
+  const followStatusResult =
+    currentUserId && currentUserId !== profile.id
+      ? await supabase
+          .from("follows")
+          .select("id")
+          .eq("follower_id", currentUserId)
+          .eq("following_id", profile.id)
+          .single()
+      : { data: null }
+
+  const [reviewsResult, followCountsResult, followersResult, followingResult] = await Promise.all([
     supabase.from("reviews").select("*").eq("user_id", profile.id).order("created_at", { ascending: false }).limit(6),
-    currentUserId
-      ? supabase.from("follows").select("id").eq("follower_id", currentUserId).eq("following_id", profile.id).single()
-      : Promise.resolve({ data: null }),
     supabase.from("follows").select("id", { count: "exact" }).eq("following_id", profile.id),
-    supabase.from("follows").select("following_id").eq("follower_id", profile.id).limit(20),
-    supabase.from("follows").select("following_id").eq("following_id", profile.id).limit(20),
+    supabase
+      .from("follows")
+      .select(
+        `
+        follower_id,
+        profiles:follower_id(id, username, display_name, avatar_url, role, is_verified)
+      `,
+      )
+      .eq("following_id", profile.id)
+      .limit(20),
+    supabase
+      .from("follows")
+      .select(
+        `
+        following_id,
+        profiles:following_id(id, username, display_name, avatar_url, role, is_verified)
+      `,
+      )
+      .eq("follower_id", profile.id)
+      .limit(20),
   ])
 
   return {

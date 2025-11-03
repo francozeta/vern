@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { followUser, unfollowUser } from "@/app/actions/follows"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 
 interface FollowButtonProps {
   targetUserId: string
@@ -24,8 +24,9 @@ export function FollowButton({
   onFollowChange,
 }: FollowButtonProps) {
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing)
+  const [isPending, startTransition] = useTransition()
   const debounceRef = useRef<NodeJS.Timeout>()
-  const router = useRouter()
+  const queryClient = useQueryClient()
 
   // Don't show button if not authenticated or trying to follow self
   if (!currentUserId || currentUserId === targetUserId) {
@@ -41,27 +42,29 @@ export function FollowButton({
 
     const newIsFollowing = !isFollowing
     setIsFollowing(newIsFollowing)
-
     onFollowChange?.(newIsFollowing)
 
     debounceRef.current = setTimeout(() => {
-      const action = newIsFollowing ? followUser : unfollowUser
+      startTransition(async () => {
+        try {
+          const action = newIsFollowing ? followUser : unfollowUser
+          const result = await action(targetUserId)
 
-      action(targetUserId)
-        .then((result) => {
           if (result.error) {
             setIsFollowing(previousIsFollowing)
             onFollowChange?.(previousIsFollowing)
             toast.error(result.error)
           } else {
-            router.refresh()
+            queryClient.invalidateQueries({ queryKey: ["follow-status"] })
+            queryClient.invalidateQueries({ queryKey: ["suggested-users"] })
+            toast.success(newIsFollowing ? "Following!" : "Unfollowed")
           }
-        })
-        .catch(() => {
+        } catch (error) {
           setIsFollowing(previousIsFollowing)
           onFollowChange?.(previousIsFollowing)
           toast.error("Error de conexión")
-        })
+        }
+      })
     }, 150)
   }
 
@@ -69,6 +72,7 @@ export function FollowButton({
     return (
       <Button
         onClick={handleToggleFollow}
+        disabled={isPending}
         className={`text-xs px-3 py-1 h-7 rounded-full font-medium transition-all duration-200 ${
           isFollowing ? "bg-zinc-800/80 hover:bg-zinc-700 text-white" : "bg-white text-black hover:bg-zinc-100"
         } ${className}`}
@@ -81,6 +85,7 @@ export function FollowButton({
   return (
     <Button
       onClick={handleToggleFollow}
+      disabled={isPending}
       className={`rounded-full h-10 md:h-11 lg:h-12 font-semibold border-0 px-6 md:px-7 lg:px-8 transition-all text-sm md:text-sm lg:text-base ${
         isFollowing
           ? "bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700 text-white"

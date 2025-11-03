@@ -1,6 +1,4 @@
 "use client"
-
-import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GradientAvatar } from "@/components/user/gradient-avatar"
@@ -8,35 +6,24 @@ import { FollowButton } from "@/components/user/follow-button"
 import { getSuggestedUsers } from "@/app/actions/follows"
 import { Users, Verified, Mic, Headphones } from "lucide-react"
 import Link from "next/link"
+import { useQuery } from "@tanstack/react-query"
 
 interface SuggestedUsersProps {
   currentUserId?: string | null
 }
 
 export function SuggestedUsers({ currentUserId }: SuggestedUsersProps) {
-  const [suggestedUsers, setSuggestedUsers] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { data, isLoading } = useQuery({
+    queryKey: ["suggested-users", currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return { users: [] }
+      return await getSuggestedUsers(currentUserId, 3)
+    },
+    enabled: !!currentUserId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
 
-  useEffect(() => {
-    if (currentUserId) {
-      loadSuggestedUsers()
-    } else {
-      setIsLoading(false)
-    }
-  }, [currentUserId])
-
-  const loadSuggestedUsers = async () => {
-    if (!currentUserId) return
-
-    try {
-      const { users } = await getSuggestedUsers(currentUserId, 3)
-      setSuggestedUsers(users)
-    } catch (error) {
-      console.error("Error loading suggested users:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const suggestedUsers = data?.users || []
 
   if (!currentUserId || isLoading) {
     return (
