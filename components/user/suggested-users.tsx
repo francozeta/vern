@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GradientAvatar } from "@/components/user/gradient-avatar"
 import { FollowButton } from "@/components/user/follow-button"
 import { getSuggestedUsers } from "@/app/actions/follows"
-import { Users, Verified, Mic, Headphones } from "lucide-react"
+import { Users, Verified, Mic, Headphones, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 
@@ -26,24 +26,48 @@ export function SuggestedUsers({ currentUserId }: SuggestedUsersProps) {
   const suggestedUsers = data?.users || []
 
   if (!currentUserId) {
-    return null
+    return (
+      <div className="w-full bg-card/50 backdrop-blur-sm rounded-lg md:rounded-lg lg:rounded-xl p-4 md:p-5 lg:p-6">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto">
+            <Sparkles className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground text-sm md:text-sm lg:text-base mb-1">
+              Discover Artists & Critics
+            </h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              Sign in to start following your favorite reviewers and artists
+            </p>
+          </div>
+          <Button
+            asChild
+            className="w-full bg-white text-black hover:bg-zinc-100 border-0 rounded-lg md:rounded-lg lg:rounded-xl text-xs md:text-sm h-9 md:h-10 lg:h-11 font-medium"
+          >
+            <Link href="/login" className="gap-2 flex items-center justify-center">
+              Sign In
+            </Link>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   if (isLoading) {
     return (
-      <div className="w-full bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50 rounded-xl md:rounded-xl lg:rounded-2xl p-4 md:p-5 lg:p-6">
-        <h3 className="font-semibold text-white mb-3 md:mb-3.5 lg:mb-4 text-sm md:text-sm lg:text-base">
+      <div className="w-full bg-card border border-border/50 rounded-lg md:rounded-lg lg:rounded-xl p-4 md:p-5 lg:p-6">
+        <h3 className="font-semibold text-foreground mb-3 md:mb-3.5 lg:mb-4 text-sm md:text-sm lg:text-base">
           Suggested for You
         </h3>
         <div className="space-y-3 md:space-y-3.5 lg:space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3 animate-pulse">
-              <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-zinc-800" />
+              <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-muted" />
               <div className="flex-1 space-y-1">
-                <div className="h-3 bg-zinc-800 rounded w-20" />
-                <div className="h-2 bg-zinc-800 rounded w-16" />
+                <div className="h-3 bg-muted rounded w-20" />
+                <div className="h-2 bg-muted rounded w-16" />
               </div>
-              <div className="h-7 w-12 bg-zinc-800 rounded-full" />
+              <div className="h-7 w-12 bg-muted rounded-full" />
             </div>
           ))}
         </div>
@@ -52,19 +76,42 @@ export function SuggestedUsers({ currentUserId }: SuggestedUsersProps) {
   }
 
   if (suggestedUsers.length === 0) {
-    return null
+    return (
+      <div className="w-full bg-card border border-border/50 rounded-lg md:rounded-lg lg:rounded-xl p-4 md:p-5 lg:p-6">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto">
+            <Users className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground text-sm md:text-base mb-1">You're All Set!</h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              You're following great curators. Check back soon for more suggestions
+            </p>
+          </div>
+          <Button
+            asChild
+            className="w-full bg-muted text-foreground hover:bg-muted/80 border-0 rounded-lg md:rounded-lg lg:rounded-xl text-xs md:text-sm h-9 md:h-10 lg:h-11"
+          >
+            <Link href="/discover">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Explore More
+            </Link>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="w-full bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50 rounded-xl md:rounded-xl lg:rounded-2xl p-4 md:p-5 lg:p-6">
-      <h3 className="font-semibold text-white mb-3 md:mb-3.5 lg:mb-4 text-sm md:text-sm lg:text-base">
+    <div className="w-full bg-card border border-border/50 rounded-lg md:rounded-lg lg:rounded-xl p-4 md:p-5 lg:p-6">
+      <h3 className="font-semibold text-foreground mb-3 md:mb-3.5 lg:mb-4 text-sm md:text-sm lg:text-base">
         Suggested for You
       </h3>
       <div className="space-y-3 md:space-y-3.5 lg:space-y-4">
         {suggestedUsers.map((user) => (
           <div key={user.id} className="flex items-center gap-3">
             <Link href={`/user/${user.username}`} className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden bg-zinc-800 flex-shrink-0">
+              <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden bg-muted flex-shrink-0">
                 {user.avatar_url ? (
                   <Avatar className="w-full h-full">
                     <AvatarImage src={user.avatar_url || "/placeholder.svg"} alt={user.display_name || user.username} />
@@ -78,7 +125,7 @@ export function SuggestedUsers({ currentUserId }: SuggestedUsersProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1">
-                  <p className="text-white text-xs md:text-sm font-medium truncate">
+                  <p className="text-foreground text-xs md:text-sm font-medium truncate">
                     {user.display_name || user.username}
                   </p>
                   {user.is_verified && (
@@ -87,17 +134,17 @@ export function SuggestedUsers({ currentUserId }: SuggestedUsersProps) {
                     </div>
                   )}
                   {user.role === "artist" && (
-                    <div className="bg-white/10 rounded-full p-0.5">
-                      <Mic className="h-2 w-2 text-white" />
+                    <div className="bg-muted rounded-full p-0.5">
+                      <Mic className="h-2 w-2 text-muted-foreground" />
                     </div>
                   )}
                   {user.role === "listener" && (
-                    <div className="bg-white/10 rounded-full p-0.5">
-                      <Headphones className="h-2 w-2 text-white" />
+                    <div className="bg-muted rounded-full p-0.5">
+                      <Headphones className="h-2 w-2 text-muted-foreground" />
                     </div>
                   )}
                 </div>
-                <p className="text-zinc-400 text-xs truncate">@{user.username}</p>
+                <p className="text-muted-foreground text-xs truncate">@{user.username}</p>
               </div>
             </Link>
             <FollowButton
@@ -111,7 +158,7 @@ export function SuggestedUsers({ currentUserId }: SuggestedUsersProps) {
 
         <Button
           asChild
-          className="w-full bg-zinc-800/80 hover:bg-zinc-700 text-white border-0 justify-center rounded-lg md:rounded-lg lg:rounded-xl text-xs md:text-sm lg:text-sm h-8 md:h-9 lg:h-10 mt-3"
+          className="w-full bg-muted text-foreground hover:bg-muted/80 border-0 justify-center rounded-lg md:rounded-lg lg:rounded-xl text-xs md:text-sm h-9 md:h-10 lg:h-11 mt-3"
         >
           <Link href="/discover">
             <Users className="h-3 w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 mr-2" />

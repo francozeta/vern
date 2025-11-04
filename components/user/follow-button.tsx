@@ -86,7 +86,7 @@ export function FollowButton({
     <Button
       onClick={handleToggleFollow}
       disabled={isPending}
-      className={`rounded-full h-10 md:h-11 lg:h-12 font-semibold border-0 px-6 md:px-7 lg:px-8 transition-all text-sm md:text-sm lg:text-base ${
+      className={`h-10 md:h-11 lg:h-12 font-semibold border-0 px-6 md:px-6 lg:px-6 transition-all text-sm md:text-sm lg:text-base rounded-full ${
         isFollowing
           ? "bg-zinc-800/80 backdrop-blur-sm hover:bg-zinc-700 text-white"
           : "bg-white text-black hover:bg-zinc-100"

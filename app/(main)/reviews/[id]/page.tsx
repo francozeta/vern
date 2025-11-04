@@ -84,10 +84,11 @@ export default function ReviewDetailPage() {
               },
             }}
             currentUserId={user?.id}
-            likeCount={data.likeCount}
-            isLiked={data.isLiked}
-            commentCount={data.commentCount}
-            isFollowing={data.isFollowing}
+            likeCount={data.likeCount || 0}
+            isLiked={data.isLiked || false}
+            commentCount={data.commentCount || 0}
+            isFollowing={data.isFollowing || false}
+            showActions={true}
           />
         </div>
 

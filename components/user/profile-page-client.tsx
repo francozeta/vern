@@ -11,7 +11,6 @@ import { FollowButton } from "@/components/user/follow-button"
 import { SuggestedUsers } from "@/components/user/suggested-users"
 import { ProfileReviewCard } from "@/components/user/profile-review-card"
 import { FollowStats } from "@/components/user/follow-stats"
-import { useProfileData } from "@/hooks/use-profile-data"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -96,15 +95,8 @@ export function ProfilePageClient({
   followers = [],
   following = [],
 }: ProfilePageClientProps) {
-  const { profile, stats, reviews, isLoading } = useProfileData(initialProfileData.username, {
-    profile: initialProfileData,
-    stats: {
-      followersCount,
-      followingCount,
-      reviewsCount: initialReviews.length,
-    },
-    reviews: initialReviews,
-  })
+  const profile = initialProfileData
+  const reviews = initialReviews
 
   const [showLinksModal, setShowLinksModal] = useState(false)
   const [reviewViewMode, setReviewViewMode] = useState<"grid" | "list">("grid")
@@ -116,7 +108,7 @@ export function ProfilePageClient({
     setLocalFollowersCount((prev) => (isFollowing ? prev + 1 : prev - 1))
   }
 
-  if (isLoading || !profile) {
+  if (!profile) {
     return <ProfileSkeleton />
   }
 
@@ -187,7 +179,7 @@ export function ProfilePageClient({
               <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/50 sm:from-background/80 sm:via-background/40 lg:from-background/75 lg:via-background/35 to-transparent" />
             </div>
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-zinc-900 via-black to-zinc-950" />
+            <div className="w-full h-full bg-background" />
           )}
         </div>
 
@@ -242,7 +234,7 @@ export function ProfilePageClient({
                     <FollowStats
                       userId={profile.id}
                       followersCount={localFollowersCount}
-                      followingCount={stats?.followingCount || 0}
+                      followingCount={followingCount}
                       currentUserId={currentUserId}
                       followers={followers}
                       following={following}
@@ -300,7 +292,7 @@ export function ProfilePageClient({
                       />
                     ) : (
                       <Button
-                        className="bg-white text-black hover:bg-zinc-100 rounded-full h-10 md:h-11 lg:h-12 font-semibold border-0 px-6 md:px-7 lg:px-8 transition-all text-sm md:text-sm lg:text-base"
+                        className="bg-white text-black hover:bg-zinc-100 font-medium px-4 sm:px-6 py-2 rounded-full transition-all text-sm sm:text-base"
                         onClick={() => (window.location.href = "/login")}
                       >
                         Follow
@@ -387,14 +379,14 @@ export function ProfilePageClient({
             )}
 
             <Tabs defaultValue="reviews" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 gap-1 bg-transparent border-b border-border/50 rounded-none p-0 mb-8 h-auto">
+              <TabsList className="grid w-full grid-cols-4 gap-2 bg-transparent border border-border/50 rounded-lg md:rounded-lg lg:rounded-xl p-2 mb-8 h-auto">
                 {tabs.map((tab) => {
                   const Icon = tab.icon
                   return (
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all rounded-none border-b-2 border-transparent data-[state=active]:border-b-white data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground hover:text-foreground"
+                      className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all rounded-lg md:rounded-lg lg:rounded-xl border border-transparent data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground hover:text-foreground hover:bg-card/50"
                     >
                       <Icon className="h-4 w-4" />
                       <span className="hidden sm:inline">{tab.label}</span>

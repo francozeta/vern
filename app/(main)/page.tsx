@@ -82,7 +82,7 @@ export default function HomePage() {
   if (!homeData) return null
 
   return (
-    <div className="min-h-screen text-white">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-7 lg:py-8">
         {/* Welcome Section */}
         <div className="space-y-2 mb-8">

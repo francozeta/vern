@@ -15,7 +15,7 @@ export async function HeaderAuth() {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/login">Sign In</Link>
         </Button>
-        <Button size="sm" asChild>
+        <Button size="sm" asChild className="bg-white text-black">
           <Link href="/signup">Sign Up</Link>
         </Button>
       </div>
