@@ -41,23 +41,31 @@ async function fetchReviewDetail(reviewId: string, currentUserId: string | null)
   let commentCount = 0
   let isFollowing = false
 
-  if (currentUserId) {
-    const [likesResult, commentsResult, followResult] = await Promise.all([
-      supabase.from("likes").select("id", { count: "exact" }).eq("review_id", reviewId),
-      supabase.from("review_comments").select("id", { count: "exact" }).eq("review_id", reviewId),
-      supabase
-        .from("follows")
-        .select("id")
-        .eq("follower_id", currentUserId)
-        .eq("following_id", review.user_id)
-        .single(),
-    ])
+  // This ensures public engagement metrics are always visible
+  const [likesResult, commentsResult] = await Promise.all([
+    supabase.from("likes").select("id", { count: "exact" }).eq("review_id", reviewId),
+    supabase.from("review_comments").select("id", { count: "exact" }).eq("review_id", reviewId),
+  ])
 
-    likeCount = likesResult.count || 0
-    isLiked = !!(
-      await supabase.from("likes").select("id").eq("review_id", reviewId).eq("user_id", currentUserId).single()
-    ).data
-    commentCount = commentsResult.count || 0
+  likeCount = likesResult.count || 0
+  commentCount = commentsResult.count || 0
+
+  if (currentUserId) {
+    const likedByUser = await supabase
+      .from("likes")
+      .select("id")
+      .eq("review_id", reviewId)
+      .eq("user_id", currentUserId)
+      .single()
+
+    const followResult = await supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", currentUserId)
+      .eq("following_id", review.user_id)
+      .single()
+
+    isLiked = !!likedByUser.data
     isFollowing = !!followResult.data
   }
 

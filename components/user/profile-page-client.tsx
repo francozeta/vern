@@ -37,7 +37,6 @@ import {
 } from "lucide-react"
 import { FaSpotify } from "react-icons/fa"
 import React from "react"
-import { ImageIcon } from "lucide-react"
 
 interface ProfilePageClientProps {
   initialProfileData: {
@@ -188,12 +187,7 @@ export function ProfilePageClient({
               <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/50 sm:from-background/80 sm:via-background/40 lg:from-background/75 lg:via-background/35 to-transparent" />
             </div>
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-muted via-muted/80 to-background/50 flex items-center justify-center">
-              <div className="text-center">
-                <ImageIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground/40">No banner yet</p>
-              </div>
-            </div>
+            <div className="w-full h-full bg-gradient-to-br from-zinc-900 via-black to-zinc-950" />
           )}
         </div>
 
@@ -297,12 +291,21 @@ export function ProfilePageClient({
                   </>
                 ) : (
                   <>
-                    <FollowButton
-                      targetUserId={profile.id}
-                      initialIsFollowing={localIsFollowing}
-                      currentUserId={currentUserId}
-                      onFollowChange={handleFollowChange}
-                    />
+                    {currentUserId ? (
+                      <FollowButton
+                        targetUserId={profile.id}
+                        initialIsFollowing={localIsFollowing}
+                        currentUserId={currentUserId}
+                        onFollowChange={handleFollowChange}
+                      />
+                    ) : (
+                      <Button
+                        className="bg-white text-black hover:bg-zinc-100 rounded-full h-10 md:h-11 lg:h-12 font-semibold border-0 px-6 md:px-7 lg:px-8 transition-all text-sm md:text-sm lg:text-base"
+                        onClick={() => (window.location.href = "/login")}
+                      >
+                        Follow
+                      </Button>
+                    )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button className="bg-background hover:bg-muted text-foreground rounded-full w-10 h-10">
@@ -384,21 +387,19 @@ export function ProfilePageClient({
             )}
 
             <Tabs defaultValue="reviews" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 bg-card/80 backdrop-blur-sm border border-card/50 rounded-xl p-1 mb-8">
+              <TabsList className="grid w-full grid-cols-4 gap-1 bg-transparent border-b border-border/50 rounded-none p-0 mb-8 h-auto">
                 {tabs.map((tab) => {
                   const Icon = tab.icon
                   return (
                     <TabsTrigger
                       key={tab.id}
                       value={tab.id}
-                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground hover:bg-card/75"
+                      className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all rounded-none border-b-2 border-transparent data-[state=active]:border-b-white data-[state=active]:text-foreground data-[state=active]:bg-transparent text-muted-foreground hover:text-foreground"
                     >
                       <Icon className="h-4 w-4" />
                       <span className="hidden sm:inline">{tab.label}</span>
                       {tab.count && tab.count > 0 && (
-                        <span className="hidden sm:inline text-xs bg-card/75 data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground px-2 py-1 rounded-full ml-1">
-                          {tab.count}
-                        </span>
+                        <span className="text-xs text-muted-foreground ml-1">{tab.count}</span>
                       )}
                     </TabsTrigger>
                   )

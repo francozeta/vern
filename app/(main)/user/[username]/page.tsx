@@ -35,7 +35,7 @@ export default function UserProfilePage() {
   return (
     <ProfilePageClient
       initialProfileData={data.profile}
-      currentUserId={data.profile.id === user?.id ? user.id : null}
+      currentUserId={user?.id || null}
       breadcrumbs={[
         { label: "User", isLink: false },
         { label: `${data.profile.display_name || data.profile.username}'s Profile` },

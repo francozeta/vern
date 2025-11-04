@@ -25,7 +25,11 @@ export function SuggestedUsers({ currentUserId }: SuggestedUsersProps) {
 
   const suggestedUsers = data?.users || []
 
-  if (!currentUserId || isLoading) {
+  if (!currentUserId) {
+    return null
+  }
+
+  if (isLoading) {
     return (
       <div className="w-full bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50 rounded-xl md:rounded-xl lg:rounded-2xl p-4 md:p-5 lg:p-6">
         <h3 className="font-semibold text-white mb-3 md:mb-3.5 lg:mb-4 text-sm md:text-sm lg:text-base">
