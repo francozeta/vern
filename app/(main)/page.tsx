@@ -4,14 +4,12 @@ import { Suspense, useEffect, useState } from "react"
 import { useUserSession } from "@/hooks/use-user-session"
 import { useHomeData } from "@/hooks/use-home-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Music, Star, Users, TrendingUp, Play } from "lucide-react"
 import { ActivityFeed } from "@/components/feed/activity-feed"
 import { SuggestedUsers } from "@/components/user/suggested-users"
 import { RecentSongs } from "@/components/player/recent-songs"
 import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
-import Link from "next/link"
 
 function ActivityFeedSection({ userId }: { userId?: string | null }) {
   return (

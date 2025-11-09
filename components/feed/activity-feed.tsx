@@ -6,6 +6,7 @@ import { getEnhancedActivity } from "@/app/actions/activity"
 import { useQuery } from "@tanstack/react-query"
 import { Music, RefreshCw } from "lucide-react"
 import { CACHE_KEYS } from "@/lib/cache/cache-keys"
+import { ActivityFeedSkeleton } from "@/components/skeletons/activity-feed-skeleton"
 
 interface ActivityFeedProps {
   currentUserId?: string | null
@@ -18,7 +19,7 @@ export function ActivityFeed({ currentUserId, showFollowingOnly = false }: Activ
     queryFn: () => getEnhancedActivity(currentUserId ?? null, 10, 0, showFollowingOnly),
     staleTime: 1000 * 60 * 3, // 3 minutes
     gcTime: 1000 * 60 * 15, // 15 minutes
-    refetchOnWindowFocus: true, // Keep this for activity since it's time-sensitive
+    refetchOnWindowFocus: true,
   })
 
   const activities = data?.activities || []
@@ -28,32 +29,7 @@ export function ActivityFeed({ currentUserId, showFollowingOnly = false }: Activ
   }
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="bg-card border-border">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4 animate-pulse">
-                <div className="w-10 h-10 bg-muted rounded-full" />
-                <div className="flex-1 space-y-3">
-                  <div className="h-4 bg-muted rounded w-1/3" />
-                  <div className="h-6 bg-muted rounded w-3/4" />
-                  <div className="flex gap-4">
-                    <div className="w-20 h-20 bg-muted rounded-xl" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-muted rounded w-3/4" />
-                      <div className="h-3 bg-muted rounded w-1/2" />
-                      <div className="h-3 bg-muted rounded w-full" />
-                      <div className="h-3 bg-muted rounded w-2/3" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
+    return <ActivityFeedSkeleton />
   }
 
   return (

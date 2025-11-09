@@ -1,21 +1,22 @@
 #nprogress {
   pointer-events: none;
-  z-index: 1031;
+  /* Increase z-index to be above header (which is typically 50) */
+  z-index: 99999;
 }
 
 #nprogress .bar {
-  /* Changed to white for visibility on dark background */
+  /* Bright white with strong visibility */
   background: hsl(0 0% 100%);
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 3px;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+  /* Stronger shadow for better visibility */
 }
 
 #nprogress .peg {
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.95);
 }
 
 #nprogress .spinner {
@@ -24,6 +25,6 @@
 
 @media (prefers-reduced-motion: no-preference) {
   #nprogress .bar {
-    transition: width 0.3s ease;
+    transition: width 0.2s ease;
   }
 }

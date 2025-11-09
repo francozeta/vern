@@ -55,3 +55,16 @@ export function usePrefetchSongs(userId?: string) {
     })
   }, [queryClient, userId])
 }
+
+export function usePrefetchDeezerSearch(query: string) {
+  const queryClient = useQueryClient()
+
+  return useCallback(() => {
+    if (!query) return
+    queryClient.prefetchQuery({
+      queryKey: CACHE_KEYS.SEARCH_DEEZER(query),
+      queryFn: () => fetch(`/api/deezer/search?q=${encodeURIComponent(query)}&limit=20`).then((r) => r.json()),
+      staleTime: 1000 * 60 * 30, // Cache Deezer searches longer since they don't change frequently
+    })
+  }, [queryClient, query])
+}

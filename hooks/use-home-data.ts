@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { CACHE_KEYS } from "@/lib/cache/cache-keys"
 
 interface Profile {
   id: string
@@ -60,10 +61,11 @@ async function fetchHomeData(userId: string): Promise<HomeData> {
 
 export function useHomeData(userId?: string) {
   return useQuery({
-    queryKey: ["home", userId],
+    queryKey: CACHE_KEYS.HOME_DATA(userId || ""),
     queryFn: () => fetchHomeData(userId!),
     enabled: !!userId,
-    staleTime: 1000 * 60 * 2,
-    gcTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 3, // 3 min
+    gcTime: 1000 * 60 * 15, // 15 min garbage collection
+    refetchOnMount: false,
   })
 }

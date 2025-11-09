@@ -20,9 +20,9 @@ export const CACHE_KEYS = {
   USER_REVIEWS: (userId: string) => ["user-reviews", userId],
 
   // Songs/Tracks
-  SONGS_ALL: "songs",
+  SONGS_ALL: ["songs"],
   SONGS_BY_ARTIST: (artistId: string) => ["songs-artist", artistId],
-  SONGS: (artistId?: string) => (artistId ? ["songs-artist", artistId] : "songs"),
+  SONGS: (artistId?: string) => (artistId ? ["songs-artist", artistId] : ["songs"]),
   SONG_BY_ID: (songId: string) => ["song", songId],
   SONGS_SEARCH: (query: string) => ["songs-search", query],
 
@@ -39,6 +39,9 @@ export const CACHE_KEYS = {
 
   // Comments
   COMMENTS_BY_REVIEW: (reviewId: string) => ["comments", reviewId],
+
+  // Search (Deezer & Users combined)
+  SEARCH_DEEZER: (query: string) => ["search-deezer", query],
 }
 
 export const cacheKeys = CACHE_KEYS
