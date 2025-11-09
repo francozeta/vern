@@ -1,0 +1,28 @@
+#nprogress {
+  pointer-events: none;
+  z-index: 1031;
+}
+
+#nprogress .bar {
+  background: hsl(0 0% 0%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+#nprogress .spinner {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #nprogress .bar {
+    transition: width 0.3s ease;
+  }
+}

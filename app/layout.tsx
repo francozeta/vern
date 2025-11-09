@@ -6,6 +6,8 @@ import "./globals.css"
 import { PlayerProvider } from "@/components/providers/player-provider"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { AuthUserProvider } from "@/components/providers/auth-user-provider"
+import { ProgressProvider } from "@/components/providers/progress-provider"
+import "@/components/providers/progress-bar.css"
 
 export const metadata: Metadata = {
   title: "VERN - Music Platform",
@@ -27,6 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.className} antialiased dark`}>
+        <ProgressProvider />
         <QueryProvider>
           <AuthUserProvider>
             <PlayerProvider>{children}</PlayerProvider>

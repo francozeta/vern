@@ -186,7 +186,7 @@ export default function HomePage() {
               <SuggestedUsersSection userId={user.id} />
 
               {/* Quick Actions */}
-              <Card className="bg-zinc-900/50 border-zinc-800/50">
+{/*               <Card className="bg-zinc-900/50 border-zinc-800/50">
                 <CardHeader>
                   <CardTitle className="text-lg text-white">Quick Actions</CardTitle>
                 </CardHeader>
@@ -210,7 +210,7 @@ export default function HomePage() {
                     </Link>
                   </Button>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
           </div>
         </div>

@@ -1,8 +1,7 @@
 "use client"
 
-import { createContext, useContext, useEffect, type ReactNode } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { createContext, useContext, type ReactNode } from "react"
+import { useCachedAuthUser } from "@/hooks/use-cached-auth-user"
 
 interface AuthUser {
   id: string
@@ -37,86 +36,11 @@ export const useAuthUser = () => {
   return context
 }
 
-async function fetchAuthUser(supabase: any): Promise<AuthUser | null> {
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
-
-  if (!authUser) return null
-
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", authUser.id).single()
-
-  if (!profile) return null
-
-  return {
-    ...profile,
-    email: authUser.email,
-  }
-}
-
 export function AuthUserProvider({ children }: { children: ReactNode }) {
-  const supabase = createBrowserSupabaseClient()
-  const qc = useQueryClient()
-
-  const queryKey = ["auth-user"]
-
-  const { data: user, isLoading } = useQuery({
-    queryKey,
-    queryFn: () => fetchAuthUser(supabase),
-    staleTime: 1000 * 60 * 5, // 5 minutes stale time
-    refetchOnWindowFocus: false, // Disable auto-refetch on window focus
-    retry: 1,
-    gcTime: 1000 * 60 * 15, // Cache for 15 minutes
-  })
-
-  useEffect(() => {
-    if (!user?.id) return
-
-    const channel = supabase
-      .channel(`profile-changes-${user.id}`, {
-        config: {
-          broadcast: { self: true },
-        },
-      })
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "profiles",
-          filter: `id=eq.${user.id}`,
-        },
-        (payload: any) => {
-          const updated = payload.new ?? payload.old
-          if (updated) {
-            qc.setQueryData(queryKey, (prev: any) => ({
-              ...prev,
-              ...updated,
-              email: prev?.email,
-            }))
-          }
-        },
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [user?.id, qc, supabase])
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        qc.invalidateQueries({ queryKey })
-      }
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
-  }, [qc])
+  const { user, isLoading, refetch } = useCachedAuthUser()
 
   const refresh = async () => {
-    await qc.invalidateQueries({ queryKey })
+    await refetch()
   }
 
   return (

@@ -5,6 +5,7 @@ import { ReviewCard } from "@/components/feed/review-card"
 import { getEnhancedActivity } from "@/app/actions/activity"
 import { useQuery } from "@tanstack/react-query"
 import { Music, RefreshCw } from "lucide-react"
+import { CACHE_KEYS } from "@/lib/cache/cache-keys"
 
 interface ActivityFeedProps {
   currentUserId?: string | null
@@ -13,10 +14,11 @@ interface ActivityFeedProps {
 
 export function ActivityFeed({ currentUserId, showFollowingOnly = false }: ActivityFeedProps) {
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["activity", currentUserId, showFollowingOnly],
+    queryKey: CACHE_KEYS.ACTIVITY_FEED(currentUserId ?? ""),
     queryFn: () => getEnhancedActivity(currentUserId ?? null, 10, 0, showFollowingOnly),
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 3, // 3 minutes
+    gcTime: 1000 * 60 * 15, // 15 minutes
+    refetchOnWindowFocus: true, // Keep this for activity since it's time-sensitive
   })
 
   const activities = data?.activities || []

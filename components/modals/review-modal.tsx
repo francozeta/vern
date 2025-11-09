@@ -20,6 +20,7 @@ import { createReview, type CreateReviewData } from "@/app/actions/reviews"
 import { toast } from "sonner"
 import { useQuery } from "@tanstack/react-query"
 import Image from "next/image"
+import { CACHE_KEYS } from "@/lib/cache/cache-keys"
 
 interface ReviewModalProps {
   open: boolean
@@ -45,14 +46,14 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
   const debouncedSearchQuery = useDebounce(searchQuery, 400)
 
   const { data: searchData, isLoading: isSearching } = useQuery({
-    queryKey: ["deezer-search", debouncedSearchQuery],
+    queryKey: CACHE_KEYS.SONGS_SEARCH(debouncedSearchQuery),
     queryFn: async () => {
       if (!debouncedSearchQuery.trim()) return { data: [] }
       const formattedQuery = formatSearchQuery(debouncedSearchQuery)
       return await searchDeezer(formattedQuery, 15)
     },
     enabled: debouncedSearchQuery.trim().length > 0,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10, // 10 minutes - increased
   })
 
   const searchResults = searchData?.data || []

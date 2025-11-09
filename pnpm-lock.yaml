@@ -62,6 +62,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.90.2
         version: 5.90.2(@tanstack/react-query@5.90.5(react@19.1.0))(react@19.1.0)
+      '@types/nprogress':
+        specifier: ^0.2.3
+        version: 0.2.3
       '@vercel/analytics':
         specifier: ^1.5.0
         version: 1.5.0(next@15.3.5(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
@@ -83,6 +86,9 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      nprogress:
+        specifier: ^0.2.0
+        version: 0.2.0
       radix-ui:
         specifier: ^1.4.3
         version: 1.4.3(@types/react-dom@19.1.6(@types/react@19.1.8))(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1478,6 +1484,9 @@ packages:
   '@types/node@20.19.6':
     resolution: {integrity: sha512-uYssdp9z5zH5GQ0L4zEJ2ZuavYsJwkozjiUzCRfGtaaQcyjAMJ34aP8idv61QlqTozu6kudyr6JMq9Chf09dfA==}
 
+  '@types/nprogress@0.2.3':
+    resolution: {integrity: sha512-k7kRA033QNtC+gLc4VPlfnue58CM1iQLgn1IMAU8VPHGOj7oIHPp9UlhedEnD/Gl8evoCjwkZjlBORtZ3JByUA==}
+
   '@types/phoenix@1.6.6':
     resolution: {integrity: sha512-PIzZZlEppgrpoT2QgbnDU+MMzuR6BbCjllj0bM70lWoejMeNJAxCchxnv7J3XFkI8MpygtRpzXrIlmWUBclP5A==}
 
@@ -2533,6 +2542,9 @@ packages:
         optional: true
       sass:
         optional: true
+
+  nprogress@0.2.0:
+    resolution: {integrity: sha512-I19aIingLgR1fmhftnbWWO3dXc0hSxqHQHQb3H8m+K3TnEn/iSeTZZOyvKXWqQESMwuUVnatlCnZdLBZZt2VSA==}
 
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
@@ -4454,6 +4466,8 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/nprogress@0.2.3': {}
+
   '@types/phoenix@1.6.6': {}
 
   '@types/react-dom@19.1.6(@types/react@19.1.8)':
@@ -5635,6 +5649,8 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
+
+  nprogress@0.2.0: {}
 
   object-assign@4.1.1: {}
 

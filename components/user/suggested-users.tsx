@@ -7,6 +7,7 @@ import { getSuggestedUsers } from "@/app/actions/follows"
 import { Users, Verified, Mic, Headphones, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
+import { CACHE_KEYS } from "@/lib/cache/cache-keys"
 
 interface SuggestedUsersProps {
   currentUserId?: string | null
@@ -14,13 +15,14 @@ interface SuggestedUsersProps {
 
 export function SuggestedUsers({ currentUserId }: SuggestedUsersProps) {
   const { data, isLoading } = useQuery({
-    queryKey: ["suggested-users", currentUserId],
+    queryKey: CACHE_KEYS.SUGGESTED_USERS(3),
     queryFn: async () => {
       if (!currentUserId) return { users: [] }
       return await getSuggestedUsers(currentUserId, 3)
     },
     enabled: !!currentUserId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1000 * 60 * 10, // 10 minutes - increased from 5
+    gcTime: 1000 * 60 * 30, // 30 minutes
   })
 
   const suggestedUsers = data?.users || []

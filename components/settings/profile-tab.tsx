@@ -17,6 +17,8 @@ import { uploadProfileImageClient } from "@/lib/supabase/upload"
 import { uploadBannerImageClient } from "@/lib/supabase/upload"
 import { profileSettingsSchema, type ProfileSettingsInput } from "@/lib/validations/settings"
 import { SettingsCard } from "@/components/settings/settings-card"
+import { CACHE_KEYS } from "@/lib/cache/cache-keys"
+import { clearCache } from "@/lib/cache/cookie-cache"
 
 interface ProfileTabProps {
   profile: {
@@ -116,12 +118,14 @@ export function ProfileTab({ profile }: ProfileTabProps) {
 
       const response = await updateProfileSettings(formData)
 
-      await queryClient.invalidateQueries({ queryKey: ["auth-user"] })
-      await queryClient.invalidateQueries({ queryKey: ["profile", profile.username] })
+      await queryClient.invalidateQueries({ queryKey: [CACHE_KEYS.AUTH_USER] })
+      await queryClient.invalidateQueries({ queryKey: CACHE_KEYS.USER_PROFILE(profile.username) })
+
+      clearCache("auth-user")
+      clearCache(`user-profile-${profile.username}`)
 
       setSubmitSuccess(response.message)
 
-      // Redirect to profile after 1 second to show success message
       setTimeout(() => {
         window.location.href = `/user/${profile.username}`
       }, 1000)
@@ -194,7 +198,7 @@ export function ProfileTab({ profile }: ProfileTabProps) {
             </div>
             {errors.username && (
               <div className="flex items-center gap-2 text-sm text-destructive">
-                <AlertCircle className="size-4" />
+                <AlertCircle className="size-4 flex-shrink-0" />
                 {errors.username.message}
               </div>
             )}
