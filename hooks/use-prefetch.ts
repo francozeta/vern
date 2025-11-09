@@ -10,6 +10,7 @@ export function usePrefetchUserProfile(username: string) {
   return useCallback(() => {
     queryClient.prefetchQuery({
       queryKey: CACHE_KEYS.USER_PROFILE(username),
+      queryFn: () => fetch(`/api/users/profile/${username}`).then((r) => r.json()),
       staleTime: 1000 * 60 * 10,
     })
   }, [queryClient, username])
@@ -21,6 +22,7 @@ export function usePrefetchReviews() {
   return useCallback(() => {
     queryClient.prefetchQuery({
       queryKey: CACHE_KEYS.REVIEWS_ALL(null),
+      queryFn: () => fetch("/api/reviews").then((r) => r.json()),
       staleTime: 1000 * 60 * 5,
     })
   }, [queryClient])
@@ -33,6 +35,7 @@ export function usePrefetchUserReviews(userId: string) {
     if (!userId) return
     queryClient.prefetchQuery({
       queryKey: CACHE_KEYS.USER_REVIEWS(userId),
+      queryFn: () => fetch(`/api/users/${userId}/reviews`).then((r) => r.json()),
       staleTime: 1000 * 60 * 5,
     })
   }, [queryClient, userId])
@@ -44,6 +47,10 @@ export function usePrefetchSongs(userId?: string) {
   return useCallback(() => {
     queryClient.prefetchQuery({
       queryKey: CACHE_KEYS.SONGS(userId),
+      queryFn: () => {
+        const url = userId ? `/api/songs?artistId=${userId}` : "/api/songs"
+        return fetch(url).then((r) => r.json())
+      },
       staleTime: 1000 * 60 * 10,
     })
   }, [queryClient, userId])

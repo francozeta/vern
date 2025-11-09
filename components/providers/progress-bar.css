@@ -4,17 +4,18 @@
 }
 
 #nprogress .bar {
-  background: hsl(0 0% 0%);
+  /* Changed to white for visibility on dark background */
+  background: hsl(0 0% 100%);
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 2px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+  height: 3px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
 }
 
 #nprogress .peg {
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
 }
 
 #nprogress .spinner {

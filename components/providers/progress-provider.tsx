@@ -18,10 +18,9 @@ export function ProgressProvider() {
   useEffect(() => {
     NProgress.start()
 
-    // Complete progress after a short delay
     const timeout = setTimeout(() => {
       NProgress.done()
-    }, 300)
+    }, 1000)
 
     return () => clearTimeout(timeout)
   }, [pathname, searchParams])

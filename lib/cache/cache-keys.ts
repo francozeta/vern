@@ -21,8 +21,9 @@ export const CACHE_KEYS = {
 
   // Songs/Tracks
   SONGS_ALL: "songs",
-  SONG_BY_ID: (songId: string) => ["song", songId],
   SONGS_BY_ARTIST: (artistId: string) => ["songs-artist", artistId],
+  SONGS: (artistId?: string) => (artistId ? ["songs-artist", artistId] : "songs"),
+  SONG_BY_ID: (songId: string) => ["song", songId],
   SONGS_SEARCH: (query: string) => ["songs-search", query],
 
   // Users
