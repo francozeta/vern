@@ -18,7 +18,7 @@ async function fetchReviewDetail(reviewId: string, currentUserId: string | null)
   const { data: review, error } = await supabase
     .from("reviews")
     .select(
-      `*,
+      `id,user_id,title,content,rating,created_at,song_title,song_artist,song_album,song_cover_url,song_preview_url,song_deezer_url,song_duration,
       profiles:user_id (
         id,
         username,
@@ -36,64 +36,52 @@ async function fetchReviewDetail(reviewId: string, currentUserId: string | null)
     throw new Error("Review not found")
   }
 
-  let likeCount = 0
-  let isLiked = false
-  let commentCount = 0
-  let isFollowing = false
-
-  // This ensures public engagement metrics are always visible
-  const [likesResult, commentsResult] = await Promise.all([
+  const [likesResult, commentsResult, relatedReviewsResult, userMetricsResult] = await Promise.all([
     supabase.from("likes").select("id", { count: "exact" }).eq("review_id", reviewId),
+
     supabase.from("review_comments").select("id", { count: "exact" }).eq("review_id", reviewId),
+
+    supabase
+      .from("reviews")
+      .select(
+        `id,title,rating,content,created_at,song_title,song_artist,
+       profiles:user_id (
+         id,
+         username,
+         display_name,
+         avatar_url,
+         is_verified,
+         role
+       )
+     `,
+      )
+      .eq("song_artist", review.song_artist)
+      .neq("id", review.id)
+      .limit(3),
+
+    currentUserId
+      ? Promise.all([
+          supabase.from("likes").select("id").eq("review_id", reviewId).eq("user_id", currentUserId).single(),
+
+          supabase
+            .from("follows")
+            .select("id")
+            .eq("follower_id", currentUserId)
+            .eq("following_id", review.user_id)
+            .single(),
+        ])
+      : Promise.resolve([{ data: null }, { data: null }]),
   ])
 
-  likeCount = likesResult.count || 0
-  commentCount = commentsResult.count || 0
-
-  if (currentUserId) {
-    const likedByUser = await supabase
-      .from("likes")
-      .select("id")
-      .eq("review_id", reviewId)
-      .eq("user_id", currentUserId)
-      .single()
-
-    const followResult = await supabase
-      .from("follows")
-      .select("id")
-      .eq("follower_id", currentUserId)
-      .eq("following_id", review.user_id)
-      .single()
-
-    isLiked = !!likedByUser.data
-    isFollowing = !!followResult.data
-  }
-
-  const { data: relatedReviews } = await supabase
-    .from("reviews")
-    .select(
-      `*,
-      profiles:user_id (
-        id,
-        username,
-        display_name,
-        avatar_url,
-        is_verified,
-        role
-      )
-    `,
-    )
-    .eq("song_artist", review.song_artist)
-    .neq("id", review.id)
-    .limit(3)
+  const [likedByUserResult, followResult] = userMetricsResult
 
   return {
     review,
-    likeCount,
-    isLiked,
-    commentCount,
-    isFollowing,
-    relatedReviews: relatedReviews || [],
+    likeCount: likesResult.count || 0,
+    isLiked: !!likedByUserResult.data,
+    commentCount: commentsResult.count || 0,
+    isFollowing: !!followResult.data,
+    relatedReviews: relatedReviewsResult.data || [],
   }
 }
 
@@ -101,6 +89,7 @@ export function useReviewDetail(reviewId: string, currentUserId: string | null) 
   return useQuery({
     queryKey: ["review-detail", reviewId, currentUserId],
     queryFn: () => fetchReviewDetail(reviewId, currentUserId),
-    staleTime: 60_000,
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 60,
   })
 }

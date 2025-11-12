@@ -16,25 +16,28 @@ interface UserProfileData {
 async function fetchUserProfile(username: string, currentUserId: string | null): Promise<UserProfileData> {
   const supabase = createBrowserSupabaseClient()
 
-  const { data: profile, error } = await supabase.from("profiles").select("*").eq("username", username).single()
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select(
+      "id,username,display_name,bio,avatar_url,banner_url,role,is_verified,location,website_url,spotify_url,instagram_url,created_at",
+    )
+    .eq("username", username)
+    .single()
 
   if (error || !profile) {
     throw new Error("Profile not found")
   }
 
-  const followStatusResult =
-    currentUserId && currentUserId !== profile.id
-      ? await supabase
-          .from("follows")
-          .select("id")
-          .eq("follower_id", currentUserId)
-          .eq("following_id", profile.id)
-          .single()
-      : { data: null }
+  const [reviewsResult, followCountsResult, followersResult, followingResult, followStatusResult] = await Promise.all([
+    supabase
+      .from("reviews")
+      .select("id,title,rating,content,created_at,song_title,song_artist,song_album,song_cover_url")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(6),
 
-  const [reviewsResult, followCountsResult, followersResult, followingResult] = await Promise.all([
-    supabase.from("reviews").select("*").eq("user_id", profile.id).order("created_at", { ascending: false }).limit(6),
     supabase.from("follows").select("id", { count: "exact" }).eq("following_id", profile.id),
+
     supabase
       .from("follows")
       .select(
@@ -45,6 +48,7 @@ async function fetchUserProfile(username: string, currentUserId: string | null):
       )
       .eq("following_id", profile.id)
       .limit(20),
+
     supabase
       .from("follows")
       .select(
@@ -55,6 +59,10 @@ async function fetchUserProfile(username: string, currentUserId: string | null):
       )
       .eq("follower_id", profile.id)
       .limit(20),
+
+    currentUserId && currentUserId !== profile.id
+      ? supabase.from("follows").select("id").eq("follower_id", currentUserId).eq("following_id", profile.id).single()
+      : Promise.resolve({ data: null }),
   ])
 
   return {
@@ -72,6 +80,8 @@ export function useUserProfile(username: string, currentUserId: string | null) {
   return useQuery({
     queryKey: ["user-profile", username, currentUserId],
     queryFn: () => fetchUserProfile(username, currentUserId),
-    staleTime: 60_000,
+    // Users will see cached data instantly on navigation, bg refetch happens every 15min
+    staleTime: 1000 * 60 * 15,
+    gcTime: 1000 * 60 * 60,
   })
 }

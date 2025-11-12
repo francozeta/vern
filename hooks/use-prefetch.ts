@@ -11,7 +11,7 @@ export function usePrefetchUserProfile(username: string) {
     queryClient.prefetchQuery({
       queryKey: CACHE_KEYS.USER_PROFILE(username),
       queryFn: () => fetch(`/api/users/profile/${username}`).then((r) => r.json()),
-      staleTime: 1000 * 60 * 10,
+      staleTime: 1000 * 60 * 20,
     })
   }, [queryClient, username])
 }
@@ -23,7 +23,7 @@ export function usePrefetchReviews() {
     queryClient.prefetchQuery({
       queryKey: CACHE_KEYS.REVIEWS_ALL(null),
       queryFn: () => fetch("/api/reviews").then((r) => r.json()),
-      staleTime: 1000 * 60 * 5,
+      staleTime: 1000 * 60 * 15,
     })
   }, [queryClient])
 }
@@ -36,7 +36,7 @@ export function usePrefetchUserReviews(userId: string) {
     queryClient.prefetchQuery({
       queryKey: CACHE_KEYS.USER_REVIEWS(userId),
       queryFn: () => fetch(`/api/users/${userId}/reviews`).then((r) => r.json()),
-      staleTime: 1000 * 60 * 5,
+      staleTime: 1000 * 60 * 15,
     })
   }, [queryClient, userId])
 }
@@ -51,7 +51,7 @@ export function usePrefetchSongs(userId?: string) {
         const url = userId ? `/api/songs?artistId=${userId}` : "/api/songs"
         return fetch(url).then((r) => r.json())
       },
-      staleTime: 1000 * 60 * 10,
+      staleTime: 1000 * 60 * 20,
     })
   }, [queryClient, userId])
 }
@@ -64,7 +64,7 @@ export function usePrefetchDeezerSearch(query: string) {
     queryClient.prefetchQuery({
       queryKey: CACHE_KEYS.SEARCH_DEEZER(query),
       queryFn: () => fetch(`/api/deezer/search?q=${encodeURIComponent(query)}&limit=20`).then((r) => r.json()),
-      staleTime: 1000 * 60 * 30, // Cache Deezer searches longer since they don't change frequently
+      staleTime: 1000 * 60 * 30,
     })
   }, [queryClient, query])
 }

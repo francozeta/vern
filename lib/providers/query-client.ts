@@ -4,8 +4,8 @@ export const createQueryClient = () => {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        gcTime: 1000 * 60 * 30, // Garbage collect after 30 min
+        staleTime: 1000 * 60 * 15,
+        gcTime: 1000 * 60 * 60,
         retry: 1,
         refetchOnWindowFocus: false,
         refetchOnReconnect: true,
