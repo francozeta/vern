@@ -41,6 +41,8 @@ export function ProfileTabClient({ profile }: ProfileTabClientProps) {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
+  const [optimisticAvatar, setOptimisticAvatar] = useState<string | null>(null)
+  const [optimisticBanner, setOptimisticBanner] = useState<string | null>(null)
 
   const {
     register,
@@ -68,6 +70,7 @@ export function ProfileTabClient({ profile }: ProfileTabClientProps) {
     setSelectedImage(file)
     if (file) {
       const previewUrl = URL.createObjectURL(file)
+      setOptimisticAvatar(previewUrl)
       setValue("avatar_url", previewUrl, { shouldDirty: true })
       return () => URL.revokeObjectURL(previewUrl)
     }
@@ -77,6 +80,7 @@ export function ProfileTabClient({ profile }: ProfileTabClientProps) {
     setSelectedBanner(file)
     if (file) {
       const previewUrl = URL.createObjectURL(file)
+      setOptimisticBanner(previewUrl)
       setValue("banner_url", previewUrl, { shouldDirty: true })
       return () => URL.revokeObjectURL(previewUrl)
     }
@@ -141,10 +145,12 @@ export function ProfileTabClient({ profile }: ProfileTabClientProps) {
           banner_url: finalBannerUrl || null,
         }))
 
-        // Clear temp files and invalidate queries
+        // Clear temp files and invalidate only affected query keys (targeted)
         setSelectedImage(null)
         setSelectedBanner(null)
-        qc.invalidateQueries({ queryKey: ["user-profile"] })
+        setOptimisticAvatar(null)
+        setOptimisticBanner(null)
+        qc.invalidateQueries({ queryKey: ["user-profile", profile.username] })
 
         setTimeout(() => {
           router.push(`/user/${profile.username}`)
@@ -152,6 +158,8 @@ export function ProfileTabClient({ profile }: ProfileTabClientProps) {
       } catch (error) {
         console.error("Error updating profile:", error)
         setSubmitError(error instanceof Error ? error.message : "An unexpected error occurred")
+        setOptimisticAvatar(null)
+        setOptimisticBanner(null)
       } finally {
         setIsSubmitting(false)
         setUploadProgress(null)
@@ -172,12 +180,19 @@ export function ProfileTabClient({ profile }: ProfileTabClientProps) {
         <div className="space-y-6">
           <div className="space-y-4">
             <Label>Banner Image</Label>
-            <BannerUpload currentBannerUrl={profile.banner_url} onImageSelect={handleBannerSelect} />
+            <BannerUpload
+              currentBannerUrl={optimisticBanner || profile.banner_url}
+              onImageSelect={handleBannerSelect}
+            />
           </div>
 
           <div className="space-y-4">
             <Label>Profile Picture</Label>
-            <AvatarUpload userId={profile.id} currentAvatarUrl={profile.avatar_url} onImageSelect={handleImageSelect} />
+            <AvatarUpload
+              userId={profile.id}
+              currentAvatarUrl={optimisticAvatar || profile.avatar_url}
+              onImageSelect={handleImageSelect}
+            />
           </div>
         </div>
       </SettingsCard>

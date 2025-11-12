@@ -89,7 +89,7 @@ export function useReviewDetail(reviewId: string, currentUserId: string | null) 
   return useQuery({
     queryKey: ["review-detail", reviewId, currentUserId],
     queryFn: () => fetchReviewDetail(reviewId, currentUserId),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 30,
     gcTime: 1000 * 60 * 60,
   })
 }

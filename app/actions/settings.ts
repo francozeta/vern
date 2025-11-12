@@ -65,9 +65,9 @@ export async function updateProfileSettings(formData: FormData) {
     throw new Error("Failed to update profile. Please try again.")
   }
 
-  revalidateTag(`profile-${user.id}`)
+  // instead of revalidateTag which now requires a cache profile parameter
+  revalidateTag(`profile-${user.id}`, "max")
   revalidatePath(`/user/${currentProfile?.username}`)
-  revalidatePath("/settings")
 
   if (role === "artist" || role === "both") {
     await createOrUpdateArtist(user.id, display_name || username)
@@ -120,8 +120,7 @@ export async function updateAccountSettings(formData: FormData) {
     throw new Error("Failed to update account settings. Please try again.")
   }
 
-  revalidateTag(`profile-${user.id}`)
-  revalidatePath("/settings")
+  revalidateTag(`profile-${user.id}`, "max")
 
   return { success: true, message: "Account settings updated successfully!" }
 }

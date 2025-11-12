@@ -64,8 +64,8 @@ export function useHomeData(userId?: string) {
     queryKey: CACHE_KEYS.HOME_DATA(userId || ""),
     queryFn: () => fetchHomeData(userId!),
     enabled: !!userId,
-    staleTime: 1000 * 60 * 3, // 3 min
-    gcTime: 1000 * 60 * 15, // 15 min garbage collection
+    staleTime: 1000 * 60 * 25,
+    gcTime: 1000 * 60 * 90,
     refetchOnMount: false,
   })
 }

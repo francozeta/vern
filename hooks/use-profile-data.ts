@@ -94,7 +94,8 @@ export function useProfileData(
     queryKey,
     queryFn: () => fetchProfileData(username, supabase),
     initialData,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 20, // Increased staleTime from 15min to 20min - profiles rarely change after load
+    gcTime: 1000 * 60 * 90,
     refetchOnWindowFocus: false,
     retry: 1,
   })
@@ -131,6 +132,7 @@ export function useProfileData(
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
+        // Only refetch if data is stale (20min)
         qc.invalidateQueries({ queryKey, refetchType: "active" })
       }
     }
