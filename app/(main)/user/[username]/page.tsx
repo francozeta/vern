@@ -1,30 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { useAuthUser } from "@/components/providers/auth-user-provider"
 import { useUserProfile } from "@/hooks/use-user-profile"
+
 import { ProfilePageClient } from "@/components/user/profile-page-client"
 import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton"
 
 export default function UserProfilePage() {
   const params = useParams()
   const router = useRouter()
-  const supabase = createBrowserSupabaseClient()
-  const [user, setUser] = useState<any>(null)
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
+  const { user, isLoading: isLoadingAuth } = useAuthUser()
+  const currentUserId = user?.id ?? null
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-      setIsLoadingAuth(false)
-    })
-  }, [supabase])
-
-  const { data, isLoading, error } = useUserProfile(params.username as string, user?.id || null)
+  const { data, isLoading, error } = useUserProfile(params.username as string, currentUserId)
 
   if (isLoadingAuth || isLoading) return <SettingsSkeleton />
-
   if (error) {
     router.push("/")
     return null
@@ -35,7 +26,7 @@ export default function UserProfilePage() {
   return (
     <ProfilePageClient
       initialProfileData={data.profile}
-      currentUserId={user?.id || null}
+      currentUserId={currentUserId}
       breadcrumbs={[
         { label: "User", isLink: false },
         { label: `${data.profile.display_name || data.profile.username}'s Profile` },
