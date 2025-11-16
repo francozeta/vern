@@ -2,32 +2,92 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
+type Activity = {
+  id: string
+  type: "review"
+  user: any
+  created_at: string
+  content: {
+    review_id: string
+    song_title: string
+    song_artist: string
+    song_cover_url: string | null
+    song_preview_url: string | null
+    rating: number | null
+    title: string
+    content: string
+  }
+  likeCount?: number
+  isLiked?: boolean
+  commentCount?: number
+  isFollowing?: boolean
+}
+
+function mapReviewToActivity(review: any): Activity {
+  const song = review.song ?? review.songs
+  const artist = song?.artist ?? song?.artists
+
+  return {
+    id: review.id,
+    type: "review",
+    created_at: review.created_at,
+    user: review.profiles ?? review.user ?? null,
+    content: {
+      review_id: review.id,
+      song_title: song?.title ?? "",
+      song_artist: artist?.name ?? "",
+      song_cover_url: song?.cover_url ?? null,
+      song_preview_url: song?.preview_url ?? null,
+      rating: review.rating,
+      title: review.title,
+      content: review.content,
+    },
+  }
+}
+
 export async function getFollowingActivity(userId: string, limit = 10, offset = 0) {
   const supabase = await createServerSupabaseClient()
 
-  // Get users that the current user is following
-  const { data: followingData } = await supabase.from("follows").select("following_id").eq("follower_id", userId)
+  const { data: followingData, error: followError } = await supabase
+    .from("follows")
+    .select("following_id")
+    .eq("follower_id", userId)
+
+  if (followError) {
+    console.error("Get following activity error:", followError)
+    return { activities: [] as Activity[] }
+  }
 
   if (!followingData || followingData.length === 0) {
-    return { activities: [] }
+    return { activities: [] as Activity[] }
   }
 
   const followingIds = followingData.map((f) => f.following_id)
 
   const { data: reviews, error } = await supabase
     .from("reviews")
-    .select(`
+    .select(
+      `
       id,
       title,
       content,
       rating,
       created_at,
-      song_title,
-      song_artist,
-      song_cover_url,
-      song_preview_url,
       user_id,
-      profiles (
+      song_id,
+      song:song_id (
+        id,
+        title,
+        cover_url,
+        preview_url,
+        provider,
+        external_id,
+        artist:artist_id (
+          id,
+          name
+        )
+      ),
+      profiles:user_id (
         id,
         username,
         display_name,
@@ -35,89 +95,18 @@ export async function getFollowingActivity(userId: string, limit = 10, offset = 
         is_verified,
         role
       )
-    `)
+    `,
+    )
     .in("user_id", followingIds)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1)
 
-  if (error) {
+  if (error || !reviews) {
     console.error("Get following activity error:", error)
-    return await getFollowingActivityFallback(followingIds, limit, offset)
+    return { activities: [] as Activity[] }
   }
 
-  // Transform reviews into activity items
-  const activities = (reviews || []).map((review: any) => ({
-    id: review.id,
-    type: "review" as const,
-    user: review.profiles,
-    content: {
-      review_id: review.id,
-      song_title: review.song_title,
-      song_artist: review.song_artist,
-      song_cover_url: review.song_cover_url,
-      song_preview_url: review.song_preview_url,
-      rating: review.rating,
-      title: review.title,
-      content: review.content,
-    },
-    created_at: review.created_at,
-  }))
-
-  return { activities }
-}
-
-async function getFollowingActivityFallback(followingIds: string[], limit: number, offset: number) {
-  const supabase = await createServerSupabaseClient()
-
-  const { data: reviews, error } = await supabase
-    .from("reviews")
-    .select("*")
-    .in("user_id", followingIds)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1)
-
-  if (error) {
-    console.error("Fallback following activity error:", error)
-    return { activities: [], error: "Failed to fetch activity" }
-  }
-
-  if (!reviews || reviews.length === 0) {
-    return { activities: [] }
-  }
-
-  // Get unique user IDs
-  const userIds = [...new Set(reviews.map((review: any) => review.user_id))]
-
-  // Fetch profiles separately
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, username, display_name, avatar_url, is_verified, role")
-    .in("id", userIds)
-
-  // Create profile map
-  const profileMap = new Map()
-  profiles?.forEach((profile: any) => {
-    profileMap.set(profile.id, profile)
-  })
-
-  // Combine reviews with profiles
-  const activities = reviews.map((review: any) => ({
-    id: review.id,
-    type: "review" as const,
-    user: profileMap.get(review.user_id) || null,
-    content: {
-      review_id: review.id,
-      song_title: review.song_title,
-      song_artist: review.song_artist,
-      song_cover_url: review.song_cover_url,
-      song_preview_url: review.song_preview_url,
-      rating: review.rating,
-      title: review.title,
-      content: review.content,
-    },
-    created_at: review.created_at,
-  }))
-
+  const activities = (reviews || []).map(mapReviewToActivity)
   return { activities }
 }
 
@@ -126,18 +115,28 @@ export async function getRecentActivity(limit = 20, offset = 0) {
 
   const { data: reviews, error } = await supabase
     .from("reviews")
-    .select(`
+    .select(
+      `
       id,
       title,
       content,
       rating,
       created_at,
-      song_title,
-      song_artist,
-      song_cover_url,
-      song_preview_url,
       user_id,
-      profiles (
+      song_id,
+      song:song_id (
+        id,
+        title,
+        cover_url,
+        preview_url,
+        provider,
+        external_id,
+        artist:artist_id (
+          id,
+          name
+        )
+      ),
+      profiles:user_id (
         id,
         username,
         display_name,
@@ -145,171 +144,76 @@ export async function getRecentActivity(limit = 20, offset = 0) {
         is_verified,
         role
       )
-    `)
+    `,
+    )
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1)
 
-  // If foreign key relationship works, return the result
-  if (!error) {
-    const activities = (reviews || []).map((review: any) => ({
-      id: review.id,
-      type: "review" as const,
-      user: review.profiles,
-      content: {
-        review_id: review.id,
-        song_title: review.song_title,
-        song_artist: review.song_artist,
-        song_cover_url: review.song_cover_url,
-        song_preview_url: review.song_preview_url,
-        rating: review.rating,
-        title: review.title,
-        content: review.content,
-      },
-      created_at: review.created_at,
-    }))
-
-    return { activities }
+  if (error || !reviews) {
+    console.error("Get recent activity error:", error)
+    return { activities: [] as Activity[] }
   }
 
-  console.log("Using fallback method for recent activity")
-  const { data: fallbackReviews, error: fallbackError } = await supabase
-    .from("reviews")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1)
-
-  if (fallbackError) {
-    console.error("Get recent activity error:", fallbackError)
-    return { activities: [], error: "Failed to fetch activity" }
-  }
-
-  if (!fallbackReviews || fallbackReviews.length === 0) {
-    return { activities: [] }
-  }
-
-  // Get unique user IDs
-  const userIds = [...new Set(fallbackReviews.map((review: any) => review.user_id))]
-
-  // Fetch profiles separately
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, username, display_name, avatar_url, is_verified, role")
-    .in("id", userIds)
-
-  // Create profile map
-  const profileMap = new Map()
-  profiles?.forEach((profile: any) => {
-    profileMap.set(profile.id, profile)
-  })
-
-  // Combine reviews with profiles
-  const activities = fallbackReviews.map((review: any) => ({
-    id: review.id,
-    type: "review" as const,
-    user: profileMap.get(review.user_id) || null,
-    content: {
-      review_id: review.id,
-      song_title: review.song_title,
-      song_artist: review.song_artist,
-      song_cover_url: review.song_cover_url,
-      song_preview_url: review.song_preview_url,
-      rating: review.rating,
-      title: review.title,
-      content: review.content,
-    },
-    created_at: review.created_at,
-  }))
-
+  const activities = (reviews || []).map(mapReviewToActivity)
   return { activities }
 }
 
-export async function getEnhancedActivity(userId: string | null, limit = 10, offset = 0, showFollowingOnly = false) {
+export async function getEnhancedActivity(
+  userId: string | null,
+  limit = 10,
+  offset = 0,
+  showFollowingOnly = false,
+) {
   const supabase = await createServerSupabaseClient()
 
-  // Step 1: Get base activities
-  let result
-  if (showFollowingOnly && userId) {
-    result = await getFollowingActivity(userId, limit, offset)
-  } else {
-    result = await getRecentActivity(limit, offset)
+  const base =
+    showFollowingOnly && userId
+      ? await getFollowingActivity(userId, limit, offset)
+      : await getRecentActivity(limit, offset)
+
+  if (!base.activities || base.activities.length === 0) {
+    return { activities: [] as Activity[] }
   }
 
-  if (!result.activities || result.activities.length === 0) {
-    return { activities: [] }
-  }
+  const reviewIds = base.activities.map((a) => a.content.review_id)
+  const userIds = base.activities.map((a) => a.user?.id).filter(Boolean)
 
-  // Step 2: Extract review IDs for batch queries
-  const reviewIds = result.activities.map((a: any) => a.content?.review_id).filter((id: any) => id !== undefined)
-
-  const userIds = result.activities.map((a: any) => a.user?.id).filter((id: any) => id !== undefined)
-
-  if (reviewIds.length === 0 || userIds.length === 0) {
-    console.warn("[v0] No valid review or user IDs found in activities")
-    return { activities: result.activities }
-  }
-
-  // Step 3: Batch fetch likes, comments, and follows (4 queries instead of 30+)
-  const [likesData, commentsData, followsData, userLikesData] = await Promise.all([
-    // Get like counts per review
-    supabase
-      .from("likes")
-      .select("review_id")
-      .in("review_id", reviewIds)
-      .then((res) => {
-        if (res.error) return {}
-        const map: Record<string, number> = {}
-        res.data?.forEach((item: any) => {
-          map[item.review_id] = (map[item.review_id] || 0) + 1
-        })
-        return map
-      }),
-    // Get comment counts per review
-    supabase
-      .from("review_comments")
-      .select("review_id")
-      .in("review_id", reviewIds)
-      .then((res) => {
-        if (res.error) return {}
-        const map: Record<string, number> = {}
-        res.data?.forEach((item: any) => {
-          map[item.review_id] = (map[item.review_id] || 0) + 1
-        })
-        return map
-      }),
-    // Get follows for current user
+  const [likesRes, commentsRes, userLikesRes, followsRes] = await Promise.all([
+    supabase.from("likes").select("review_id").in("review_id", reviewIds),
+    supabase.from("review_comments").select("review_id").in("review_id", reviewIds),
     userId
-      ? supabase
-          .from("follows")
-          .select("following_id")
-          .eq("follower_id", userId)
-          .in("following_id", userIds)
-          .then((res) => {
-            if (res.error) return new Set()
-            return new Set(res.data?.map((f: any) => f.following_id) || [])
-          })
-      : Promise.resolve(new Set()),
-    // Get likes by current user
+      ? supabase.from("likes").select("review_id").eq("user_id", userId).in("review_id", reviewIds)
+      : Promise.resolve({ data: [] as any[] }),
     userId
-      ? supabase
-          .from("likes")
-          .select("review_id")
-          .eq("user_id", userId)
-          .in("review_id", reviewIds)
-          .then((res) => {
-            if (res.error) return new Set()
-            return new Set(res.data?.map((l: any) => l.review_id) || [])
-          })
-      : Promise.resolve(new Set()),
+      ? supabase.from("follows").select("following_id").eq("follower_id", userId).in("following_id", userIds as string[])
+      : Promise.resolve({ data: [] as any[] }),
   ])
 
-  // Step 4: Merge data with activities
-  const enhancedActivities = result.activities.map((activity: any) => ({
+  const likes = ((likesRes as any).data || []) as any[]
+  const comments = ((commentsRes as any).data || []) as any[]
+  const userLikes = ((userLikesRes as any).data || []) as any[]
+  const follows = ((followsRes as any).data || []) as any[]
+
+  const likesByReview: Record<string, number> = {}
+  for (const l of likes) {
+    likesByReview[l.review_id] = (likesByReview[l.review_id] ?? 0) + 1
+  }
+
+  const commentsByReview: Record<string, number> = {}
+  for (const c of comments) {
+    commentsByReview[c.review_id] = (commentsByReview[c.review_id] ?? 0) + 1
+  }
+
+  const userLikesSet = new Set(userLikes.map((l: any) => l.review_id))
+  const followsSet = new Set(follows.map((f: any) => f.following_id))
+
+  const activities = base.activities.map((activity) => ({
     ...activity,
-    likeCount: likesData[activity.content.review_id] || 0,
-    isLiked: userLikesData.has(activity.content.review_id),
-    commentCount: commentsData[activity.content.review_id] || 0,
-    isFollowing: followsData.has(activity.user?.id),
+    likeCount: likesByReview[activity.content.review_id] ?? 0,
+    isLiked: userLikesSet.has(activity.content.review_id),
+    commentCount: commentsByReview[activity.content.review_id] ?? 0,
+    isFollowing: activity.user?.id ? followsSet.has(activity.user.id) : false,
   }))
 
-  return { activities: enhancedActivities }
+  return { activities }
 }

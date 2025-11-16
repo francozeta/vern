@@ -63,6 +63,8 @@ export interface SelectedSong {
   duration: number
   previewUrl?: string
   deezerUrl?: string
+  artistExternalId: string
+  albumExternalId: string
 }
 
 // Search tracks in Deezer using the Next.js API proxy
@@ -97,6 +99,8 @@ export function convertToSelectedSong(track: DeezerTrack): SelectedSong {
     duration: track.duration,
     previewUrl: track.preview,
     deezerUrl: `https://www.deezer.com/track/${track.id}`,
+    artistExternalId: String(track.artist.id),
+    albumExternalId: String(track.album.id),
   }
 }
 

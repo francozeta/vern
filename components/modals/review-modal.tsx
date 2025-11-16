@@ -85,6 +85,10 @@ export function ReviewModal({ open, onOpenChange, userId, userAvatar }: ReviewMo
         song_duration: selectedSong!.duration,
         song_preview_url: selectedSong!.previewUrl,
         song_deezer_url: selectedSong!.deezerUrl,
+
+        artist_external_id: selectedSong!.artistExternalId,
+        album_external_id: selectedSong!.albumExternalId,
+
         title: reviewTitle.trim(),
         content: reviewContent.trim(),
         rating,
