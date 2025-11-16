@@ -9,13 +9,20 @@ interface Review {
   id: string
   title: string
   content: string
-  rating: number
+  rating: number | null
   created_at: string
+  user_id: string
   song_id: string
   song_title: string
   song_artist: string
+  song_album: string
   song_cover_url: string | null
-  user_id: string
+  song_preview_url: string | null
+  profiles?: { [key: string]: any }
+  likeCount: number
+  isLiked: boolean
+  commentCount: number
+  isFollowing: boolean
 }
 
 export function useCachedUserReviews(userId: string | null, enabled = true) {
