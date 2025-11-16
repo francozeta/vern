@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils"
 import { createBrowserSupabaseClient } from "@/lib/supabase/client"
 import { useComments } from "@/hooks/use-comments"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useAuthUser } from "@/components/providers/auth-user-provider"
 
 interface CommentsModalProps {
   open: boolean
@@ -32,25 +33,16 @@ interface CommentsModalProps {
 }
 
 export function CommentsModal({ open, onOpenChange, reviewId, onCommentAdded, onCommentDeleted }: CommentsModalProps) {
-  const { data: comments = [], isLoading, error } = useComments(reviewId, open)
 
   const [newComment, setNewComment] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   const maxCommentLength = 500
   const queryClient = useQueryClient()
+  const { user } = useAuthUser()
+  const currentUserId = user?.id ?? null
 
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const supabase = createBrowserSupabaseClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setCurrentUserId(user?.id || null)
-    }
-    getCurrentUser()
-  }, [])
+  const { data: comments = [], isLoading, error } = useComments(reviewId, open)
 
   useEffect(() => {
     if (error) {

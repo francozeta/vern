@@ -3,33 +3,14 @@
 import { Button } from "@/components/ui/button"
 import { Upload, Feather } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ReviewModal } from "@/components/modals/review-modal"
-import { createClient } from "@/lib/supabase/client"
+import { useAuthUser } from "@/components/providers/auth-user-provider"
 
 export function FloatingActionButtons() {
   const isMobile = useIsMobile()
   const [showReviewModal, setShowReviewModal] = useState(false)
-  const [user, setUser] = useState<any>(null)
-
-  // Get user data for modal
-  useEffect(() => {
-    const getUser = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase.from("profiles").select("avatar_url").eq("id", user.id).single()
-
-        setUser({
-          id: user.id,
-          avatar_url: profile?.avatar_url,
-        })
-      }
-    }
-    getUser()
-  }, [])
+  const { user } = useAuthUser()
 
   if (!isMobile) return null
 

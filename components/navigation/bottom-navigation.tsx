@@ -1,45 +1,23 @@
 "use client"
 import { Home, Search, Library, BookOpen, Plus } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ReviewModal } from "@/components/modals/review-modal"
-import { createClient } from "@/lib/supabase/client"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useAuthUser } from "@/components/providers/auth-user-provider"
 
 export function BottomNavigation() {
   const isMobile = useIsMobile()
   const pathname = usePathname()
   const [showReviewModal, setShowReviewModal] = useState(false)
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    const getUser = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("avatar_url, username")
-          .eq("id", user.id)
-          .single()
-
-        setUser({
-          id: user.id,
-          avatar_url: profile?.avatar_url,
-          username: profile?.username,
-        })
-      }
-    }
-    getUser()
-  }, [])
+  const { user } = useAuthUser()
 
   if (!isMobile) return null
 
   const handleReviewClick = () => {
+    if (!user) return
     setShowReviewModal(true)
   }
 
@@ -89,7 +67,7 @@ export function BottomNavigation() {
                   </Link>
                 )
               })}
-              <Link href="/profile" className="ml-1">
+              <Link href={`/user/${user?.username}`} className="ml-1">
                 <div className="relative p-1">
                   <Avatar className="h-7 w-7 ring-1 ring-white/20 hover:ring-white/40 transition-all duration-200 hover:scale-105">
                     <AvatarImage src={user?.avatar_url || "/placeholder.svg"} alt={user?.username || "Profile"} />
@@ -97,7 +75,7 @@ export function BottomNavigation() {
                       {user?.username?.charAt(0)?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  {isActive("/profile") && (
+                  {isActive("/user") && (
                     <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
                   )}
                 </div>

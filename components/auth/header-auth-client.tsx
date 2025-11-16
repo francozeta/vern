@@ -6,39 +6,25 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useState, useEffect } from "react"
 import { ReviewModal } from "@/components/modals/review-modal"
 import { UploadModal } from "@/components/modals/upload-modal"
-import { createClient } from "@/lib/supabase/client"
+import { useAuthUser } from "@/components/providers/auth-user-provider"
 import { useRouter } from "next/navigation"
 
 export function HeaderAuthClient() {
-  const isMobile = useIsMobile()
+const isMobile = useIsMobile()
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [showUploadModal, setShowUploadModal] = useState(false)
-  const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
+  const { user, isLoading } = useAuthUser()
   const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    const getUser = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase.from("profiles").select("avatar_url, role").eq("id", user.id).single()
+  if (!mounted || isLoading) return null
+  if (isMobile) return null
 
-        setUser({
-          id: user.id,
-          avatar_url: profile?.avatar_url,
-          role: profile?.role,
-        })
-      }
-    }
-    getUser()
-  }, [])
+
 
   if (!mounted) {
     return (
@@ -55,12 +41,20 @@ export function HeaderAuthClient() {
   }
 
   const handleReviewClick = () => {
+    if (!user) {
+      router.push("/login")
+      return
+    }
     setShowReviewModal(true)
   }
 
   const handleUploadClick = () => {
-    if (user?.role === "listener") {
-      alert("Only artists can upload songs. Please change your role in settings.")
+    if (!user) {
+      router.push("/login")
+      return
+    }
+    if (user.role === "listener") {
+      alert("Only artists can upload songs")
       return
     }
     setShowUploadModal(true)
