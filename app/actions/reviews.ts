@@ -31,39 +31,117 @@ function isUUID(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
-/**
- * Normaliza canción:
- * - Si song_id ya es UUID → se asume songs.id
- * - Si NO es UUID → se toma como external_id de Deezer
- *   - Si ya existe song con ese external_id+provider="deezer" → se usa
- *   - Si no existe → se inserta una nueva song "importada" desde Deezer
- */
+/* ----------------------------------------------------
+   ENSURE ARTIST
+---------------------------------------------------- */
+async function ensureArtist(supabase: any, name: string, external_id?: string | null) {
+  if (!name) return null
+
+  // Buscar si ya existe ese artista
+  const { data: existing } = await supabase
+    .from("artists")
+    .select("id")
+    .eq("name", name)
+    .maybeSingle()
+
+  if (existing?.id) return existing.id
+
+  // Insertar nuevo artista (no requiere external_id)
+  const { data: inserted, error } = await supabase
+    .from("artists")
+    .insert({
+      name,
+      provider: external_id ? "deezer" : "native",
+      external_id: external_id || null,
+    })
+    .select("id")
+    .single()
+
+  if (error) {
+    console.error("Error inserting artist:", error)
+    return null
+  }
+
+  return inserted?.id ?? null
+}
+
+/* ----------------------------------------------------
+   ENSURE ALBUM
+---------------------------------------------------- */
+async function ensureAlbum(
+  supabase: any,
+  title: string,
+  artist_id: string | null,
+  external_id?: string | null
+) {
+  if (!title) return null
+
+  // Buscar si existe el álbum
+  const { data: existing } = await supabase
+    .from("albums")
+    .select("id")
+    .eq("name", title)
+    .maybeSingle()
+
+  if (existing?.id) return existing.id
+
+  // Insertar
+  const { data: inserted, error } = await supabase
+    .from("albums")
+    .insert({
+      name: title,
+      artist_id: artist_id,
+      provider: external_id ? "deezer" : "native",
+      external_id: external_id || null,
+    })
+    .select("id")
+    .single()
+
+  if (error) {
+    console.error("Error inserting album:", error)
+    return null
+  }
+
+  return inserted?.id ?? null
+}
+
+/* ----------------------------------------------------
+   ENSURE SONG
+---------------------------------------------------- */
 async function ensureSongIdFromData(supabase: any, data: CreateReviewData): Promise<string> {
-  // Caso 1: ya es UUID => es songs.id
   if (isUUID(data.song_id)) {
     return data.song_id
   }
 
   const externalId = data.song_id
 
-  // Caso 2: buscar canción Deezer ya normalizada
-  const { data: existingSong, error: existingError } = await supabase
+  // Buscar canción Deezer ya normalizada
+  const { data: existingSong } = await supabase
     .from("songs")
     .select("id")
     .eq("external_id", externalId)
     .eq("provider", "deezer")
     .maybeSingle()
 
-  if (existingError) {
-    console.error("Error checking existing Deezer song:", existingError)
-  }
+  if (existingSong?.id) return existingSong.id
 
-  if (existingSong?.id) {
-    return existingSong.id
-  }
+  // === Normalizar Artista ===
+  const artist_id = await ensureArtist(
+    supabase,
+    data.song_artist,
+    data.artist_external_id ?? externalId
+  )
 
-  // Caso 3: crear nueva canción Deezer en nuestra tabla songs
-  const { data: newSong, error: insertError } = await supabase
+  // === Normalizar Álbum ===
+  const album_id = await ensureAlbum(
+    supabase,
+    data.song_album,
+    artist_id,
+    data.album_external_id ?? null
+  )
+
+  // === Insertar canción ===
+  const { data: newSong, error } = await supabase
     .from("songs")
     .insert({
       title: data.song_title,
@@ -74,29 +152,30 @@ async function ensureSongIdFromData(supabase: any, data: CreateReviewData): Prom
       preview_url: data.song_preview_url ?? null,
       source: "deezer",
       is_published: true,
+      artist_id,
+      album_id,
     })
     .select("id")
     .single()
 
-  if (insertError || !newSong) {
-    console.error("Error inserting Deezer song:", insertError)
+  if (error || !newSong) {
+    console.error("Error inserting Deezer song:", error)
     throw new Error("Failed to create song from Deezer data")
   }
 
   return newSong.id
 }
 
+/* ----------------------------------------------------
+   CREATE REVIEW
+---------------------------------------------------- */
 export async function createReview(data: CreateReviewData) {
   const supabase = await createServerSupabaseClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+  const { data: auth } = await supabase.auth.getUser()
+  const user = auth?.user
 
-  if (authError || !user) {
-    return { error: "User not authenticated" }
-  }
+  if (!user) return { error: "User not authenticated" }
 
   if (!data.title.trim() || !data.content.trim()) {
     return { error: "Title and content are required" }
@@ -106,25 +185,9 @@ export async function createReview(data: CreateReviewData) {
     return { error: "Rating must be between 1 and 5" }
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", user.id)
-    .single()
+  const songId = await ensureSongIdFromData(supabase, data)
 
-  if (profileError || !profile) {
-    return { error: "User profile not found" }
-  }
-
-  let songId: string
-  try {
-    songId = await ensureSongIdFromData(supabase, data)
-  } catch (error) {
-    console.error("Error ensuring song id:", error)
-    return { error: "Failed to normalize song data" }
-  }
-
-  const { data: review, error: insertError } = await supabase
+  const { data: review, error } = await supabase
     .from("reviews")
     .insert({
       user_id: user.id,
@@ -136,19 +199,18 @@ export async function createReview(data: CreateReviewData) {
     .select("id")
     .single()
 
-  if (insertError || !review) {
-    console.error("Error creating review:", insertError)
+  if (error || !review) {
+    console.error("Error creating review:", error)
     return { error: "Failed to create review" }
   }
 
   revalidatePath("/")
   revalidatePath("/reviews")
-  revalidatePath(`/user/${user.id}`)
   revalidatePath(`/reviews/${review.id}`)
+  revalidatePath(`/user/${user.id}`)
 
   return { success: true, review }
 }
-
 // ---------- HELPERS DE LECTURA ----------
 
 function mapReviewWithSong(row: any) {

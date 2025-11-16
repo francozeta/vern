@@ -1,113 +1,97 @@
-import { notFound } from "next/navigation"
-import { Disc, Play, Clock, Users } from "lucide-react"
-import { Button } from "@/components/ui/button"
+// app/(main)/artist/[id]/page.tsx
+
+import { fetchArtistDeezerData } from "@/lib/artist/fetchArtist"
+import { getArtistFromDB } from "@/lib/artist/getArtistFull"
 import Image from "next/image"
-import { PageContainer } from "@/components/layout/page-container"
+import Link from "next/link"
 
-async function getArtistData(id: string) {
-  try {
-    const response = await fetch(`https://api.deezer.com/artist/${id}`)
-    if (!response.ok) return null
-    return await response.json()
-  } catch (error) {
-    console.error("Error fetching artist:", error)
-    return null
+export default async function ArtistPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
+  const deezerArtist = await fetchArtistDeezerData(id)
+  const dbArtist = await getArtistFromDB(id)
+
+  if (!deezerArtist && !dbArtist) {
+    return (
+      <div className="p-6 text-center">
+        <h1 className="text-xl font-semibold">Artist not found</h1>
+        <Link href="/" className="text-blue-400 underline">
+          Go back</Link>
+      </div>
+    )
   }
-}
 
-async function getArtistTopTracks(id: string) {
-  try {
-    const response = await fetch(`https://api.deezer.com/artist/${id}/top?limit=10`)
-    if (!response.ok) return []
-    const data = await response.json()
-    return data.data || []
-  } catch (error) {
-    console.error("Error fetching artist tracks:", error)
-    return []
-  }
-}
-
-export default async function ArtistPage({ params }: { params: { id: string } }) {
-  const [artist, topTracks] = await Promise.all([getArtistData(params.id), getArtistTopTracks(params.id)])
-
-  if (!artist) {
-    notFound()
-  }
+  const artistName = deezerArtist?.name ?? dbArtist?.name ?? "Unknown Artist"
+  const followers = deezerArtist?.nb_fan
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="relative h-64 md:h-80 bg-gradient-to-b from-muted to-background">
+    <div className="p-6 space-y-8">
+      {/* HEADER */}
+      <div className="flex items-center gap-6">
         <Image
-          src={artist.picture_xl || artist.picture_big || "/placeholder.svg"}
-          alt={artist.name}
-          fill
-          className="object-cover opacity-20"
+          src={deezerArtist?.picture_big ?? dbArtist?.image_url ?? "/placeholder.png"}
+          alt={artistName}
+          width={180}
+          height={180}
+          className="rounded-xl object-cover"
         />
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-          <div className="flex items-end gap-6">
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden bg-card border-4 border-border flex-shrink-0">
-              <Image
-                src={artist.picture_xl || artist.picture_big || "/placeholder.svg"}
-                alt={artist.name}
-                width={160}
-                height={160}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2">
-                <Disc className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground font-medium">ARTIST</span>
-              </div>
-              <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4">{artist.name}</h1>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  {artist.nb_fan?.toLocaleString() || 0} fans
-                </div>
-              </div>
-            </div>
-          </div>
+        <div>
+          <h1 className="text-4xl font-bold">{artistName}</h1>
+          {followers != null && (
+            <p className="text-zinc-400">
+              {followers.toLocaleString()} followers
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Content */}
-      <PageContainer maxWidth="lg">
-        {/* Top Tracks */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Popular Tracks</h2>
-          <div className="space-y-2">
-            {topTracks.map((track: any, index: number) => (
-              <div
-                key={track.id}
-                className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 cursor-pointer group transition-colors border border-transparent hover:border-border"
-              >
-                <span className="text-muted-foreground text-sm w-6 text-center">{index + 1}</span>
-                <div className="w-12 h-12 rounded-lg overflow-hidden bg-card flex-shrink-0">
-                  <Image
-                    src={track.album.cover_medium || "/placeholder.svg"}
-                    alt={track.title}
-                    width={48}
-                    height={48}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
+      {/* SONGS NORMALIZADAS EN VERN */}
+      {dbArtist?.songs && dbArtist.songs.length > 0 && (
+        <section>
+          <h2 className="text-xl font-semibold mb-3">Songs on VERN</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {dbArtist.songs.map((song: any) => (
+              <Link key={song.id} href={`/song/${song.id}`}>
+                <div className="bg-zinc-900 p-3 rounded-lg hover:bg-zinc-800 transition">
+                  {song.cover_url && (
+                    <Image
+                      src={song.cover_url}
+                      width={250}
+                      height={250}
+                      alt={song.title}
+                      className="rounded mb-2 object-cover"
+                    />
+                  )}
+                  <h3 className="font-medium">{song.title}</h3>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground truncate">{track.title}</p>
-                  <p className="text-sm text-muted-foreground truncate">{track.album.title}</p>
-                </div>
-                <div className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, "0")}
-                </div>
-                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Play className="h-4 w-4" />
-                </Button>
-              </div>
+              </Link>
             ))}
           </div>
-        </div>
-      </PageContainer>
+        </section>
+      )}
+
+      {/* TOP TRACKS DE DEEZER */}
+      {deezerArtist?.topTracks?.length > 0 && (
+        <section>
+          <h2 className="text-xl font-semibold mb-3">Top Tracks</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {deezerArtist.topTracks.map((track: any) => (
+              <Link key={track.id} href={`/song/deezer/${track.id}`}>
+                <div className="bg-zinc-900 p-3 rounded-lg hover:bg-zinc-800 transition">
+                  <Image
+                    src={track.album.cover_medium}
+                    width={250}
+                    height={250}
+                    alt={track.title}
+                    className="rounded mb-2 object-cover"
+                  />
+                  <h3 className="font-medium">{track.title}</h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
