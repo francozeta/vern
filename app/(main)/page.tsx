@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useEffect, useState } from "react"
-import { useUserSession } from "@/hooks/use-user-session"
+import { useAuthUser } from "@/components/providers/auth-user-provider"
 import { useHomeData } from "@/hooks/use-home-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -28,7 +28,7 @@ function SuggestedUsersSection({ userId }: { userId?: string | null }) {
 }
 
 export default function HomePage() {
-  const { user, loading: isLoadingAuth } = useUserSession()
+  const { user, isLoading: isLoadingAuth } = useAuthUser()
   const { data: homeData, isLoading } = useHomeData(user?.id)
   const [mounted, setMounted] = useState(false)
 
@@ -184,7 +184,7 @@ export default function HomePage() {
               <SuggestedUsersSection userId={user.id} />
 
               {/* Quick Actions */}
-{/*               <Card className="bg-zinc-900/50 border-zinc-800/50">
+              {/*               <Card className="bg-zinc-900/50 border-zinc-800/50">
                 <CardHeader>
                   <CardTitle className="text-lg text-white">Quick Actions</CardTitle>
                 </CardHeader>

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { getCacheData, setCacheData } from "@/lib/cache/cookie-cache"
 import { CACHE_KEYS } from "@/lib/cache/cache-keys"
-import { createBrowserClient } from "@supabase/ssr"
+import { createBrowserSupabaseClient } from "@/lib/supabase/client"  // ⬅️ usa tu cliente global
 
 interface AuthUser {
   id: string
@@ -28,10 +28,7 @@ interface AuthUser {
  */
 async function fetchAuthUser(): Promise<AuthUser | null> {
   try {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    )
+    const supabase = createBrowserSupabaseClient()   // ⬅️ aquí
 
     const {
       data: { session },
@@ -68,18 +65,17 @@ export function useCachedAuthUser() {
     setIsHydrated(true)
   }, [queryClient])
 
-  // Query for actual data (with SWR pattern)
   const {
     data: user,
     isLoading,
-    refetch,
     status,
+    refetch,
   } = useQuery({
     queryKey: [CACHE_KEYS.AUTH_USER],
     queryFn: fetchAuthUser,
-    staleTime: 1000 * 60 * 10, // 10 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour cache
-    enabled: isHydrated, // Only fetch after hydration
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 24,
+    refetchOnWindowFocus: false,
   })
 
   useEffect(() => {

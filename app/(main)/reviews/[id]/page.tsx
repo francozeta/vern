@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { useAuthUser } from "@/components/providers/auth-user-provider"
 import { useReviewDetail } from "@/hooks/use-review-detail"
 import { ReviewCard } from "@/components/feed/review-card"
 import { Button } from "@/components/ui/button"
@@ -15,18 +14,11 @@ import { AudioPlayer } from "@/components/player/audio-player"
 
 export default function ReviewDetailPage() {
   const params = useParams()
-  const supabase = createBrowserSupabaseClient()
-  const [user, setUser] = useState<any>(null)
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
+  const { user, isLoading: isLoadingAuth } = useAuthUser()
+  const userId = user?.id ?? null
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-      setIsLoadingAuth(false)
-    })
-  }, [supabase])
 
-  const { data, isLoading, error } = useReviewDetail(params.id as string, user?.id || null)
+  const { data, isLoading, error } = useReviewDetail(params.id as string, userId)
 
   if (isLoadingAuth || isLoading) return <SettingsSkeleton />
 

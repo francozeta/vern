@@ -1,33 +1,21 @@
 "use client"
 
-import { createBrowserSupabaseClient } from "@/lib/supabase/client"
+import { useAuthUser } from "@/components/providers/auth-user-provider"
 import { ReviewCard } from "@/components/feed/review-card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Music, Search, Filter, Star, TrendingUp, Clock } from "lucide-react"
-import { useEffect, useState } from "react"
-import type { User } from "@supabase/supabase-js"
+import { useState } from "react"
 import { ReviewListSkeleton } from "@/components/skeletons/review-skeleton"
 import { useReviews } from "@/hooks/use-reviews"
 import { PageContainer } from "@/components/layout/page-container"
 
 export default function ReviewsPage() {
-  const [user, setUser] = useState<User | null>(null)
+  const { user } = useAuthUser()
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("recent")
-
-  useEffect(() => {
-    const getUser = async () => {
-      const supabase = createBrowserSupabaseClient()
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser()
-      setUser(currentUser)
-    }
-    getUser()
-  }, [])
 
   const { data: reviews = [], isLoading } = useReviews(null)
 

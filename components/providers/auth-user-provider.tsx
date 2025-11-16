@@ -44,6 +44,8 @@ export function AuthUserProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthUserContext.Provider value={{ user: user ?? null, isLoading, refresh }}>{children}</AuthUserContext.Provider>
+    <AuthUserContext.Provider value={{ user: user ?? null, isLoading, refresh }}>
+      {children}
+    </AuthUserContext.Provider>
   )
 }
