@@ -19,7 +19,7 @@ async function fetchUserProfile(username: string, currentUserId: string | null):
   const { data: profile, error } = await supabase
     .from("profiles")
     .select(
-      "id,username,display_name,bio,avatar_url,banner_url,role,is_verified,location,website_url,spotify_url,instagram_url,created_at",
+      "id,username,display_name,bio,avatar_url,banner_url,role,is_verified,website_url,spotify_url,instagram_url,created_at",
     )
     .eq("username", username)
     .single()
